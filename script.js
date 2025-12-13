@@ -107,6 +107,8 @@ function populateFontSelector() {
   colorThemeSelector.addEventListener('change', (e) => {
     currentColorTheme = e.target.value;
     updatePixelColors();
+    // Reset characters to make color change more noticeable
+    resetAllCharacters();
   });
 }
 
@@ -116,6 +118,10 @@ function updatePixelFonts() {
     pixel.style.fontFamily = currentFont;
     pixel.style.fontSize = currentFontSize + 'px';
   });
+  
+  // Update control panel font
+  const controlPanel = document.getElementById('controlPanel');
+  controlPanel.style.fontFamily = currentFont + ', monospace';
 }
 
 function updatePixelColors() {
@@ -124,6 +130,47 @@ function updatePixelColors() {
   pixelElements.forEach(pixel => {
     pixel.style.color = theme.color;
     pixel.style.textShadow = `0 0 3px ${theme.glow}`;
+  });
+  
+  // Update control panel color
+  updateControlPanelColor();
+}
+
+function updateControlPanelColor() {
+  const theme = colorThemes[currentColorTheme];
+  const controlPanel = document.getElementById('controlPanel');
+  const cssVars = `
+    --theme-color: ${theme.color};
+    --theme-glow: ${theme.glow};
+  `;
+  controlPanel.style.borderColor = theme.color;
+  controlPanel.setAttribute('data-theme', currentColorTheme);
+  
+  // Update all label colors and select/input border colors
+  const labels = controlPanel.querySelectorAll('label');
+  labels.forEach(label => {
+    label.style.color = theme.color;
+  });
+  
+  const selects = controlPanel.querySelectorAll('select, input[type="range"]');
+  selects.forEach(select => {
+    select.style.borderColor = theme.color;
+    select.style.color = theme.color;
+  });
+  
+  const valueLabels = controlPanel.querySelectorAll('.value-label');
+  valueLabels.forEach(label => {
+    label.style.color = theme.color;
+  });
+}
+
+function resetAllCharacters() {
+  // Reset all characters to make color/visual changes more dynamic
+  pixels.forEach(p => {
+    p.textContent = chars[Math.floor(Math.random() * chars.length)];
+    // Reset position to top with new random x for more visible change
+    p.y = -20 + Math.random() * 100;
+    p.x = Math.random() * window.innerWidth;
   });
 }
 
