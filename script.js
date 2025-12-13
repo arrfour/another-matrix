@@ -268,6 +268,10 @@ function animate() {
         p.y = -20;
         p.x = Math.random() * window.innerWidth;
         p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+        // Update color to current theme when character resets
+        const theme = colorThemes[currentColorTheme];
+        p.element.style.color = theme.color;
+        p.element.style.textShadow = `0 0 3px ${theme.glow}`;
       }
       
       // Use transform for GPU acceleration instead of top/left
