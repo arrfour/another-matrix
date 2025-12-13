@@ -16,6 +16,7 @@ const colorThemes = {
 
 // LocalStorage management for preferences
 const STORAGE_KEY = 'matrixEffectPreferences';
+const DEFAULTS_STORAGE_KEY = 'matrixEffectDefaults';
 
 function loadPreferences() {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -31,6 +32,17 @@ function loadPreferences() {
 }
 
 function getDefaultPreferences() {
+  // Check if user has saved custom defaults
+  const customDefaults = localStorage.getItem(DEFAULTS_STORAGE_KEY);
+  if (customDefaults) {
+    try {
+      return JSON.parse(customDefaults);
+    } catch (e) {
+      console.warn('Failed to parse custom defaults:', e);
+    }
+  }
+  
+  // Return hardcoded defaults
   return {
     font: 'monospace',
     fontSize: 14,
@@ -49,8 +61,19 @@ function savePreferences() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
 }
 
+function saveAsDefault() {
+  const newDefaults = {
+    font: currentFont,
+    fontSize: currentFontSize,
+    density: currentDensity,
+    colorTheme: currentColorTheme
+  };
+  localStorage.setItem(DEFAULTS_STORAGE_KEY, JSON.stringify(newDefaults));
+}
+
 function resetPreferences() {
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(DEFAULTS_STORAGE_KEY);
   location.reload();
 }
 
@@ -166,6 +189,13 @@ function populateFontSelector() {
     if (confirm('Reset all settings to defaults?')) {
       resetPreferences();
     }
+  });
+
+  // Add save as default button functionality
+  const saveDefaultBtn = document.getElementById('saveDefaultBtn');
+  saveDefaultBtn.addEventListener('click', () => {
+    saveAsDefault();
+    alert('Current settings saved as defaults!');
   });
 }
 

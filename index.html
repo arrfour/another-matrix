@@ -104,7 +104,8 @@
       transition: color 0.3s;
     }
 
-    #resetBtn {
+    #resetBtn,
+    #saveDefaultBtn {
       padding: 6px 12px;
       background-color: transparent;
       border: 1px solid #0f0;
@@ -118,12 +119,14 @@
       box-sizing: border-box;
     }
 
-    #resetBtn:hover {
+    #resetBtn:hover,
+    #saveDefaultBtn:hover {
       background-color: rgba(0, 255, 0, 0.1);
       text-shadow: 0 0 10px #0f0;
     }
 
-    #resetBtn:active {
+    #resetBtn:active,
+    #saveDefaultBtn:active {
       background-color: rgba(0, 255, 0, 0.2);
     }
   </style>
@@ -161,6 +164,8 @@
     </div>
 
     <button id="resetBtn" style="margin-top: 8px; padding: 5px 10px; background-color: #000; color: #0f0; border: 1px solid #0f0; border-radius: 3px; cursor: pointer; font-family: monospace; font-size: 10px; transition: all 0.3s;">Reset to Defaults</button>
+
+    <button id="saveDefaultBtn" style="margin-top: 6px; padding: 5px 10px; background-color: #000; color: #0f0; border: 1px solid #0f0; border-radius: 3px; cursor: pointer; font-family: monospace; font-size: 10px; transition: all 0.3s;">Save as Default</button>
   </div>
 
   <script src="script.js"></script>
