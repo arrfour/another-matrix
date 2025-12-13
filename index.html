@@ -62,17 +62,94 @@
       line-height: 1;
       will-change: transform;
     }
+
+    #controlPanel {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: rgba(0, 0, 0, 0.9);
+      border: 2px solid #0f0;
+      border-radius: 5px;
+      padding: 15px;
+      z-index: 1000;
+      display: grid;
+      gap: 12px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #0f0;
+      max-width: 280px;
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: space-between;
+    }
+
+    .control-row label {
+      flex-shrink: 0;
+    }
+
+    .control-row input[type="range"] {
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .control-row select,
+    .control-row input[type="range"] {
+      background-color: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 3px 5px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    .control-row select:hover,
+    .control-row input[type="range"]:hover {
+      text-shadow: 0 0 10px #0f0;
+    }
+
+    .value-label {
+      min-width: 35px;
+      text-align: right;
+    }
   </style>
 </head>
 <body>
   <div id="matrix"></div>
 
-  <div id="fontSelector">
-    <label for="fontDropdown">Font:</label>
-    <select id="fontDropdown"></select>
-    <span style="color: #0f0; margin-left: 20px; font-family: monospace; font-size: 12px;">Size:</span>
-    <input type="range" id="sizeSlider" min="8" max="32" value="14" style="margin-left: 5px; vertical-align: middle;">
-    <span id="sizeLabel" style="color: #0f0; margin-left: 8px; font-family: monospace; font-size: 12px;">14px</span>
+  <div id="controlPanel">
+    <div class="control-row">
+      <label for="fontDropdown">Font:</label>
+      <select id="fontDropdown"></select>
+    </div>
+    
+    <div class="control-row">
+      <label for="sizeSlider">Size:</label>
+      <input type="range" id="sizeSlider" min="8" max="32" value="14">
+      <span id="sizeLabel" class="value-label">14px</span>
+    </div>
+
+    <div class="control-row">
+      <label for="densitySlider">Density:</label>
+      <input type="range" id="densitySlider" min="20" max="200" value="80" step="10">
+      <span id="densityLabel" class="value-label">80</span>
+    </div>
+
+    <div class="control-row">
+      <label for="colorTheme">Color:</label>
+      <select id="colorTheme">
+        <option value="green">Green</option>
+        <option value="cyan">Cyan</option>
+        <option value="purple">Purple</option>
+        <option value="blue">Blue</option>
+        <option value="white">White</option>
+      </select>
+    </div>
   </div>
 
   <script src="script.js"></script>

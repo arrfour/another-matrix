@@ -2,6 +2,17 @@
 const fontList = ['Monaco', 'Menlo', 'Courier New', 'Inconsolata', 'Courier', 'monospace'];
 let currentFont = 'monospace';
 let currentFontSize = 14;
+let currentDensity = 80;
+let currentColorTheme = 'green';
+
+// Color themes
+const colorThemes = {
+  green: { color: '#0f0', glow: '#0f0', label: 'Green' },
+  cyan: { color: '#0ff', glow: '#0ff', label: 'Cyan' },
+  purple: { color: '#f0f', glow: '#f0f', label: 'Purple' },
+  blue: { color: '#00f', glow: '#00f', label: 'Blue' },
+  white: { color: '#fff', glow: '#fff', label: 'White' }
+};
 
 // Performance optimization: throttle animation frame updates
 let lastFrameTime = 0;
@@ -76,6 +87,27 @@ function populateFontSelector() {
   sizeSlider.addEventListener('input', (e) => {
     debouncedSizeUpdate(e.target.value);
   });
+
+  // Add density slider control with debouncing
+  const densitySlider = document.getElementById('densitySlider');
+  const densityLabel = document.getElementById('densityLabel');
+  
+  const debouncedDensityUpdate = debounce((value) => {
+    currentDensity = parseInt(value);
+    densityLabel.textContent = currentDensity;
+    updateDensity(currentDensity);
+  }, 150);
+  
+  densitySlider.addEventListener('input', (e) => {
+    debouncedDensityUpdate(e.target.value);
+  });
+
+  // Add color theme selector
+  const colorThemeSelector = document.getElementById('colorTheme');
+  colorThemeSelector.addEventListener('change', (e) => {
+    currentColorTheme = e.target.value;
+    updatePixelColors();
+  });
 }
 
 function updatePixelFonts() {
@@ -86,12 +118,63 @@ function updatePixelFonts() {
   });
 }
 
+function updatePixelColors() {
+  const theme = colorThemes[currentColorTheme];
+  const pixelElements = document.querySelectorAll('.pixel');
+  pixelElements.forEach(pixel => {
+    pixel.style.color = theme.color;
+    pixel.style.textShadow = `0 0 3px ${theme.glow}`;
+  });
+}
+
+function updateDensity(newDensity) {
+  const matrixDiv = document.getElementById('matrix');
+  const difference = newDensity - pixels.length;
+  
+  if (difference > 0) {
+    // Add new pixels
+    for (let i = 0; i < difference; i++) {
+      addPixel();
+    }
+  } else if (difference < 0) {
+    // Remove pixels
+    for (let i = 0; i < Math.abs(difference); i++) {
+      const pixel = pixels.pop();
+      if (pixel) {
+        pixel.element.remove();
+      }
+    }
+  }
+}
+
+function addPixel() {
+  const pixel = document.createElement('div');
+  pixel.classList.add('pixel');
+  
+  const x = Math.random() * window.innerWidth;
+  const y = Math.random() * window.innerHeight;
+  const speed = 2 + Math.random() * 6;
+  const opacity = 0.3 + Math.random() * 0.7;
+  
+  pixel.style.opacity = opacity;
+  pixel.style.fontFamily = currentFont;
+  pixel.style.fontSize = currentFontSize + 'px';
+  const theme = colorThemes[currentColorTheme];
+  pixel.style.color = theme.color;
+  pixel.style.textShadow = `0 0 3px ${theme.glow}`;
+  pixel.style.transform = `translate(${x}px, ${y}px)`;
+  pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
+  
+  matrixDiv.appendChild(pixel);
+  pixels.push({ element: pixel, speed: speed, x: x, y: y });
+}
+
 // Initialize
 detectSystemFont();
 populateFontSelector();
 
 const matrixDiv = document.getElementById('matrix');
-const numPixels = 80; // Reduced from 150 for better CPU performance
+const numPixels = 80; // Initial density
 const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 // Store pixel data with speeds
@@ -110,6 +193,9 @@ for (let i = 0; i < numPixels; i++) {
   pixel.style.opacity = opacity;
   pixel.style.fontFamily = currentFont;
   pixel.style.fontSize = currentFontSize + 'px';
+  const theme = colorThemes[currentColorTheme];
+  pixel.style.color = theme.color;
+  pixel.style.textShadow = `0 0 3px ${theme.glow}`;
   pixel.style.transform = `translate(${x}px, ${y}px)`;
   pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
   
