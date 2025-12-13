@@ -225,6 +225,12 @@ function updatePixelFonts() {
   // Update control panel font
   const controlPanel = document.getElementById('controlPanel');
   controlPanel.style.fontFamily = currentFont + ', monospace';
+  
+  // Also update selects and inputs in control panel
+  const inputs = controlPanel.querySelectorAll('select, input[type="range"], button, label');
+  inputs.forEach(input => {
+    input.style.fontFamily = currentFont + ', monospace';
+  });
 }
 
 function updatePixelColors() {
@@ -242,28 +248,45 @@ function updatePixelColors() {
 function updateControlPanelColor() {
   const theme = colorThemes[currentColorTheme];
   const controlPanel = document.getElementById('controlPanel');
-  const cssVars = `
-    --theme-color: ${theme.color};
-    --theme-glow: ${theme.glow};
-  `;
+  
+  // Update main panel border and text color
   controlPanel.style.borderColor = theme.color;
+  controlPanel.style.color = theme.color;
   controlPanel.setAttribute('data-theme', currentColorTheme);
   
-  // Update all label colors and select/input border colors
+  // Update control header
+  const controlHeader = document.getElementById('controlHeader');
+  if (controlHeader) {
+    const headerSpans = controlHeader.querySelectorAll('span');
+    headerSpans.forEach(span => {
+      span.style.color = theme.color;
+    });
+  }
+  
+  // Update all label colors
   const labels = controlPanel.querySelectorAll('label');
   labels.forEach(label => {
     label.style.color = theme.color;
   });
   
+  // Update all select and input elements
   const selects = controlPanel.querySelectorAll('select, input[type="range"]');
   selects.forEach(select => {
     select.style.borderColor = theme.color;
     select.style.color = theme.color;
   });
   
+  // Update value labels
   const valueLabels = controlPanel.querySelectorAll('.value-label');
   valueLabels.forEach(label => {
     label.style.color = theme.color;
+  });
+  
+  // Update all buttons in control panel
+  const buttons = controlPanel.querySelectorAll('button');
+  buttons.forEach(button => {
+    button.style.borderColor = theme.color;
+    button.style.color = theme.color;
   });
 }
 
