@@ -14,6 +14,46 @@ const colorThemes = {
   white: { color: '#fff', glow: '#fff', label: 'White' }
 };
 
+// LocalStorage management for preferences
+const STORAGE_KEY = 'matrixEffectPreferences';
+
+function loadPreferences() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      console.warn('Failed to parse stored preferences:', e);
+      return getDefaultPreferences();
+    }
+  }
+  return getDefaultPreferences();
+}
+
+function getDefaultPreferences() {
+  return {
+    font: 'monospace',
+    fontSize: 14,
+    density: 80,
+    colorTheme: 'green'
+  };
+}
+
+function savePreferences() {
+  const prefs = {
+    font: currentFont,
+    fontSize: currentFontSize,
+    density: currentDensity,
+    colorTheme: currentColorTheme
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+}
+
+function resetPreferences() {
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
 // Performance optimization: throttle animation frame updates
 let lastFrameTime = 0;
 const FRAME_INTERVAL = 33; // ~30fps instead of 60fps
@@ -72,16 +112,20 @@ function populateFontSelector() {
   selector.addEventListener('change', (e) => {
     currentFont = e.target.value;
     updatePixelFonts();
+    savePreferences();
   });
   
   // Add size slider control with debouncing
   const sizeSlider = document.getElementById('sizeSlider');
   const sizeLabel = document.getElementById('sizeLabel');
+  sizeSlider.value = currentFontSize;
+  sizeLabel.textContent = currentFontSize + 'px';
   
   const debouncedSizeUpdate = debounce((value) => {
     currentFontSize = parseInt(value);
     sizeLabel.textContent = currentFontSize + 'px';
     updatePixelFonts();
+    savePreferences();
   }, 100);
   
   sizeSlider.addEventListener('input', (e) => {
@@ -91,11 +135,14 @@ function populateFontSelector() {
   // Add density slider control with debouncing
   const densitySlider = document.getElementById('densitySlider');
   const densityLabel = document.getElementById('densityLabel');
+  densitySlider.value = currentDensity;
+  densityLabel.textContent = currentDensity;
   
   const debouncedDensityUpdate = debounce((value) => {
     currentDensity = parseInt(value);
     densityLabel.textContent = currentDensity;
     updateDensity(currentDensity);
+    savePreferences();
   }, 150);
   
   densitySlider.addEventListener('input', (e) => {
@@ -104,11 +151,21 @@ function populateFontSelector() {
 
   // Add color theme selector
   const colorThemeSelector = document.getElementById('colorTheme');
+  colorThemeSelector.value = currentColorTheme;
   colorThemeSelector.addEventListener('change', (e) => {
     currentColorTheme = e.target.value;
     updatePixelColors();
     // Reset characters to make color change more noticeable
     resetAllCharacters();
+    savePreferences();
+  });
+
+  // Add reset button functionality
+  const resetBtn = document.getElementById('resetBtn');
+  resetBtn.addEventListener('click', () => {
+    if (confirm('Reset all settings to defaults?')) {
+      resetPreferences();
+    }
   });
 }
 
@@ -217,6 +274,12 @@ function addPixel() {
 }
 
 // Initialize
+const prefs = loadPreferences();
+currentFont = prefs.font;
+currentFontSize = prefs.fontSize;
+currentDensity = prefs.density;
+currentColorTheme = prefs.colorTheme;
+
 detectSystemFont();
 populateFontSelector();
 
