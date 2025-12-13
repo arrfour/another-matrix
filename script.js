@@ -3,6 +3,19 @@ const fontList = ['Monaco', 'Menlo', 'Courier New', 'Inconsolata', 'Courier', 'm
 let currentFont = 'monospace';
 let currentFontSize = 14;
 
+// Performance optimization: throttle animation frame updates
+let lastFrameTime = 0;
+const FRAME_INTERVAL = 33; // ~30fps instead of 60fps
+
+// Debounce helper for slider updates
+function debounce(func, delay) {
+  let timeoutId;
+  return function(...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+}
+
 function detectSystemFont() {
   // Check if fonts are actually available by testing rendering
   const canvas = document.createElement('canvas');
@@ -50,14 +63,18 @@ function populateFontSelector() {
     updatePixelFonts();
   });
   
-  // Add size slider control
+  // Add size slider control with debouncing
   const sizeSlider = document.getElementById('sizeSlider');
   const sizeLabel = document.getElementById('sizeLabel');
   
-  sizeSlider.addEventListener('input', (e) => {
-    currentFontSize = parseInt(e.target.value);
+  const debouncedSizeUpdate = debounce((value) => {
+    currentFontSize = parseInt(value);
     sizeLabel.textContent = currentFontSize + 'px';
     updatePixelFonts();
+  }, 100);
+  
+  sizeSlider.addEventListener('input', (e) => {
+    debouncedSizeUpdate(e.target.value);
   });
 }
 
@@ -74,7 +91,7 @@ detectSystemFont();
 populateFontSelector();
 
 const matrixDiv = document.getElementById('matrix');
-const numPixels = 150; // Number of falling characters
+const numPixels = 80; // Reduced from 150 for better CPU performance
 const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 // Store pixel data with speeds
@@ -90,36 +107,43 @@ for (let i = 0; i < numPixels; i++) {
   const speed = 2 + Math.random() * 6;
   const opacity = 0.3 + Math.random() * 0.7;
   
-  pixel.style.left = x + 'px';
-  pixel.style.top = y + 'px';
   pixel.style.opacity = opacity;
   pixel.style.fontFamily = currentFont;
   pixel.style.fontSize = currentFontSize + 'px';
+  pixel.style.transform = `translate(${x}px, ${y}px)`;
   pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
   
   matrixDiv.appendChild(pixel);
   pixels.push({ element: pixel, speed: speed, x: x, y: y });
 }
 
-// Animation loop
+// Animation loop with frame throttling
+let lastUpdate = 0;
 function animate() {
-  for (let i = 0; i < pixels.length; i++) {
-    const p = pixels[i];
-    p.y += p.speed;
+  const now = performance.now();
+  
+  // Only update every FRAME_INTERVAL milliseconds (~30fps)
+  if (now - lastUpdate >= FRAME_INTERVAL) {
+    lastUpdate = now;
     
-    // Reset to top when falling off screen
-    if (p.y > window.innerHeight) {
-      p.y = -20;
-      p.x = Math.random() * window.innerWidth;
-      p.element.style.left = p.x + 'px';
-      p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
-    }
-    
-    p.element.style.top = p.y + 'px';
-    
-    // Randomly change character
-    if (Math.random() < 0.02) {
-      p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+    for (let i = 0; i < pixels.length; i++) {
+      const p = pixels[i];
+      p.y += p.speed;
+      
+      // Reset to top when falling off screen
+      if (p.y > window.innerHeight) {
+        p.y = -20;
+        p.x = Math.random() * window.innerWidth;
+        p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+      }
+      
+      // Use transform for GPU acceleration instead of top/left
+      p.element.style.transform = `translate(${p.x}px, ${p.y}px)`;
+      
+      // Randomly change character (reduced frequency)
+      if (Math.random() < 0.01) {
+        p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+      }
     }
   }
   requestAnimationFrame(animate);
