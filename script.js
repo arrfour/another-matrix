@@ -197,6 +197,22 @@ function populateFontSelector() {
     saveAsDefault();
     alert('Current settings saved as defaults!');
   });
+
+  // Add control panel toggle functionality
+  const controlHeader = document.getElementById('controlHeader');
+  const controlContent = document.getElementById('controlContent');
+  const toggleIcon = document.getElementById('toggleIcon');
+
+  controlHeader.addEventListener('click', () => {
+    controlContent.classList.toggle('collapsed');
+    toggleIcon.textContent = controlContent.classList.contains('collapsed') ? '+' : '−';
+  });
+
+  // Add refresh button functionality
+  const refreshBtn = document.getElementById('refreshBtn');
+  refreshBtn.addEventListener('click', () => {
+    location.reload();
+  });
 }
 
 function updatePixelFonts() {

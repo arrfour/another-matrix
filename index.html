@@ -72,13 +72,36 @@
       border-radius: 5px;
       padding: 15px;
       z-index: 1000;
-      display: grid;
-      gap: 12px;
       font-family: monospace;
       font-size: 11px;
       color: #0f0;
       max-width: 280px;
       transition: border-color 0.3s, color 0.3s;
+    }
+
+    #controlHeader {
+      cursor: pointer;
+      user-select: none;
+      font-weight: bold;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    #controlContent {
+      display: grid;
+      gap: 12px;
+      transition: all 0.3s ease;
+      max-height: 1000px;
+      overflow: hidden;
+    }
+
+    #controlContent.collapsed {
+      display: none;
+      max-height: 0;
     }
 
     .control-row {
@@ -105,7 +128,8 @@
     }
 
     #resetBtn,
-    #saveDefaultBtn {
+    #saveDefaultBtn,
+    #refreshBtn {
       padding: 6px 12px;
       background-color: transparent;
       border: 1px solid #0f0;
@@ -120,13 +144,15 @@
     }
 
     #resetBtn:hover,
-    #saveDefaultBtn:hover {
+    #saveDefaultBtn:hover,
+    #refreshBtn:hover {
       background-color: rgba(0, 255, 0, 0.1);
       text-shadow: 0 0 10px #0f0;
     }
 
     #resetBtn:active,
-    #saveDefaultBtn:active {
+    #saveDefaultBtn:active,
+    #refreshBtn:active {
       background-color: rgba(0, 255, 0, 0.2);
     }
   </style>
@@ -135,7 +161,12 @@
   <div id="matrix"></div>
 
   <div id="controlPanel">
-    <div class="control-row">
+    <div id="controlHeader" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; cursor: pointer; user-select: none;">
+      <span style="font-weight: bold;">⚙ Controls</span>
+      <span id="toggleIcon" style="font-size: 14px;">−</span>
+    </div>
+    
+    <div id="controlContent">
       <label for="fontDropdown">Font:</label>
       <select id="fontDropdown"></select>
     </div>
@@ -165,7 +196,9 @@
 
     <button id="resetBtn" style="margin-top: 8px; padding: 5px 10px; background-color: #000; color: #0f0; border: 1px solid #0f0; border-radius: 3px; cursor: pointer; font-family: monospace; font-size: 10px; transition: all 0.3s;">Reset to Defaults</button>
 
-    <button id="saveDefaultBtn" style="margin-top: 6px; padding: 5px 10px; background-color: #000; color: #0f0; border: 1px solid #0f0; border-radius: 3px; cursor: pointer; font-family: monospace; font-size: 10px; transition: all 0.3s;">Save as Default</button>
+    </div>
+
+    <button id="refreshBtn" style="margin-top: 8px; padding: 6px 12px; background-color: transparent; border: 1px solid #0f0; border-radius: 3px; color: #0f0; font-family: monospace; font-size: 10px; cursor: pointer; transition: all 0.3s; width: 100%; box-sizing: border-box;">Refresh</button>
   </div>
 
   <script src="script.js"></script>
