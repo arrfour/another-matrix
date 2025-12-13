@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Matrix Effect</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden; /* Prevent scrollbars */
+      background-color: #000; /* Black background */
+    }
+
+    #matrix {
+      width: 100vw;
+      height: 100vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #fontSelector {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: rgba(0, 0, 0, 0.8);
+      border: 2px solid #0f0;
+      border-radius: 5px;
+      padding: 10px 15px;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #fontSelector label {
+      color: #0f0;
+      font-family: monospace;
+      font-size: 12px;
+      margin-right: 8px;
+    }
+
+    #fontSelector select {
+      background-color: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 5px;
+      font-family: monospace;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    #fontSelector select:hover {
+      text-shadow: 0 0 10px #0f0;
+    }
+
+    .pixel {
+      position: absolute;
+      font-family: monospace;
+      font-size: 14px;
+      color: #0f0;
+      text-shadow: 0 0 5px #0f0;
+      white-space: nowrap;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="matrix"></div>
+
+  <div id="fontSelector">
+    <label for="fontDropdown">Font:</label>
+    <select id="fontDropdown"></select>
+    <span style="color: #0f0; margin-left: 20px; font-family: monospace; font-size: 12px;">Size:</span>
+    <input type="range" id="sizeSlider" min="8" max="32" value="14" style="margin-left: 5px; vertical-align: middle;">
+    <span id="sizeLabel" style="color: #0f0; margin-left: 8px; font-family: monospace; font-size: 12px;">14px</span>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
