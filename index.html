@@ -167,38 +167,40 @@
     </div>
     
     <div id="controlContent">
-      <label for="fontDropdown">Font:</label>
-      <select id="fontDropdown"></select>
-    </div>
-    
-    <div class="control-row">
-      <label for="sizeSlider">Size:</label>
-      <input type="range" id="sizeSlider" min="8" max="32" value="14">
-      <span id="sizeLabel" class="value-label">14px</span>
-    </div>
+      <div class="control-row">
+        <label for="fontDropdown">Font:</label>
+        <select id="fontDropdown"></select>
+      </div>
+      
+      <div class="control-row">
+        <label for="sizeSlider">Size:</label>
+        <input type="range" id="sizeSlider" min="8" max="32" value="14">
+        <span id="sizeLabel" class="value-label">14px</span>
+      </div>
 
-    <div class="control-row">
-      <label for="densitySlider">Density:</label>
-      <input type="range" id="densitySlider" min="20" max="200" value="80" step="10">
-      <span id="densityLabel" class="value-label">80</span>
+      <div class="control-row">
+        <label for="densitySlider">Density:</label>
+        <input type="range" id="densitySlider" min="20" max="200" value="80" step="10">
+        <span id="densityLabel" class="value-label">80</span>
+      </div>
+
+      <div class="control-row">
+        <label for="colorTheme">Color:</label>
+        <select id="colorTheme">
+          <option value="green">Green</option>
+          <option value="cyan">Cyan</option>
+          <option value="purple">Purple</option>
+          <option value="blue">Blue</option>
+          <option value="white">White</option>
+        </select>
+      </div>
+
+      <button id="resetBtn" style="margin-top: 8px; padding: 5px 10px; background-color: #000; color: #0f0; border: 1px solid #0f0; border-radius: 3px; cursor: pointer; font-family: monospace; font-size: 10px; transition: all 0.3s;">Reset to Defaults</button>
+
+      <button id="saveDefaultBtn" style="margin-top: 6px; padding: 5px 10px; background-color: #000; color: #0f0; border: 1px solid #0f0; border-radius: 3px; cursor: pointer; font-family: monospace; font-size: 10px; transition: all 0.3s;">Save Current</button>
+
+      <button id="refreshBtn" style="margin-top: 8px; padding: 6px 12px; background-color: transparent; border: 1px solid #0f0; border-radius: 3px; color: #0f0; font-family: monospace; font-size: 10px; cursor: pointer; transition: all 0.3s; width: 100%; box-sizing: border-box;">Refresh</button>
     </div>
-
-    <div class="control-row">
-      <label for="colorTheme">Color:</label>
-      <select id="colorTheme">
-        <option value="green">Green</option>
-        <option value="cyan">Cyan</option>
-        <option value="purple">Purple</option>
-        <option value="blue">Blue</option>
-        <option value="white">White</option>
-      </select>
-    </div>
-
-    <button id="resetBtn" style="margin-top: 8px; padding: 5px 10px; background-color: #000; color: #0f0; border: 1px solid #0f0; border-radius: 3px; cursor: pointer; font-family: monospace; font-size: 10px; transition: all 0.3s;">Reset to Defaults</button>
-
-    </div>
-
-    <button id="refreshBtn" style="margin-top: 8px; padding: 6px 12px; background-color: transparent; border: 1px solid #0f0; border-radius: 3px; color: #0f0; font-family: monospace; font-size: 10px; cursor: pointer; transition: all 0.3s; width: 100%; box-sizing: border-box;">Refresh</button>
   </div>
 
   <script src="script.js"></script>
