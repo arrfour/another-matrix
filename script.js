@@ -251,21 +251,18 @@ function populateFontSelector() {
   });
 
   // Add control panel toggle functionality
-  const controlHeader = document.getElementById('controlHeader');
+  const toggleBtn = document.getElementById('toggleBtn');
   const controlContent = document.getElementById('controlContent');
-  const toggleIcon = document.getElementById('toggleIcon');
   
   // Load and apply saved collapse state on page load
   const isCollapsed = loadCollapseState();
   if (isCollapsed) {
     controlContent.classList.add('collapsed');
-    toggleIcon.textContent = '+';
   }
 
-  controlHeader.addEventListener('click', () => {
+  toggleBtn.addEventListener('click', () => {
     controlContent.classList.toggle('collapsed');
     const nowCollapsed = controlContent.classList.contains('collapsed');
-    toggleIcon.textContent = nowCollapsed ? '+' : '−';
     saveCollapseState(nowCollapsed);
   });
 

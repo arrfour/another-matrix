@@ -175,15 +175,49 @@
     #refreshBtn:active {
       background-color: rgba(0, 255, 0, 0.2);
     }
+
+    .button-group {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .glyph-btn {
+      flex: 1;
+      padding: 6px 4px;
+      background-color: transparent;
+      border: 1px solid var(--theme-color);
+      border-radius: 3px;
+      color: var(--theme-color);
+      font-family: monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+    }
+
+    .glyph-btn:hover {
+      background-color: rgba(0, 255, 0, 0.1);
+      text-shadow: 0 0 10px var(--theme-glow);
+    }
+
+    .glyph-btn:active {
+      background-color: rgba(0, 255, 0, 0.2);
+    }
   </style>
 </head>
 <body>
   <div id="matrix"></div>
 
   <div id="controlPanel">
-    <div id="controlHeader" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; cursor: pointer; user-select: none;">
-      <span style="font-weight: bold;">⚙ Controls</span>
-      <span id="toggleIcon" style="font-size: 14px;">−</span>
+    <div class="button-group">
+      <button id="toggleBtn" class="glyph-btn" title="Toggle panel">−</button>
+      <button id="resetBtn" class="glyph-btn" title="Reset to defaults">↻</button>
+      <button id="saveDefaultBtn" class="glyph-btn" title="Save as default">💾</button>
+      <button id="refreshBtn" class="glyph-btn" title="Refresh">⟲</button>
     </div>
     
     <div id="controlContent">
@@ -219,12 +253,6 @@
         <label for="dataModeToggle">Data Mode:</label>
         <input type="checkbox" id="dataModeToggle" style="width: 16px; height: 16px; cursor: pointer;">
       </div>
-
-      <button id="resetBtn" style="margin-top: 8px; padding: 5px 10px; background-color: transparent; border-radius: 3px; cursor: pointer; font-family: monospace; font-size: 10px; transition: all 0.3s;">Reset to Defaults</button>
-
-      <button id="saveDefaultBtn" style="margin-top: 6px; padding: 5px 10px; background-color: transparent; border-radius: 3px; cursor: pointer; font-family: monospace; font-size: 10px; transition: all 0.3s;">Save Current</button>
-
-      <button id="refreshBtn" style="margin-top: 8px; padding: 6px 12px; background-color: transparent; border-radius: 3px; cursor: pointer; font-family: monospace; font-size: 10px; transition: all 0.3s; width: 100%; box-sizing: border-box;">Refresh</button>
     </div>
   </div>
 
