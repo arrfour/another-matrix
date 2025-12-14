@@ -550,3 +550,4 @@ if (document.readyState === 'loading') {
   // DOM is already loaded
   initializeApp();
 }
+}
