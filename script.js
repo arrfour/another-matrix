@@ -2,6 +2,7 @@ const fontList = ['Monaco', 'Menlo', 'Courier New', 'Inconsolata', 'Courier', 'm
 let currentFont = 'monospace';
 let currentFontSize = 14;
 let currentDensity = 80;
+let currentTrail = 35; // 0..100 (short..long)
 let currentColorTheme = 'green';
 let dataMode = false;
 let matrixVisible = true; // faucet: ON/OFF
@@ -13,6 +14,8 @@ let ctx = null;
 let dpr = 1;
 let canvasWidth = 0;
 let canvasHeight = 0;
+
+let trailFillStyle = 'rgba(0, 0, 0, 0.28)';
 
 // Canvas particles (one per character)
 const particles = [];
@@ -107,6 +110,7 @@ function getDefaultPreferences() {
     font: 'monospace',
     fontSize: 14,
     density: 80,
+    trail: 35,
     colorTheme: 'green',
     dataMode: false,
     matrixVisible: true
@@ -118,6 +122,7 @@ function savePreferences() {
     font: currentFont,
     fontSize: currentFontSize,
     density: currentDensity,
+    trail: currentTrail,
     colorTheme: currentColorTheme,
     dataMode: dataMode,
     matrixVisible: matrixVisible
@@ -130,6 +135,7 @@ function saveAsDefault() {
     font: currentFont,
     fontSize: currentFontSize,
     density: currentDensity,
+    trail: currentTrail,
     colorTheme: currentColorTheme,
     dataMode: dataMode,
     matrixVisible: matrixVisible
@@ -185,6 +191,22 @@ function randomChar() {
 function getCanvasFont() {
   // Quotes are fine even for generic families, and help with names like Courier New.
   return `${currentFontSize}px "${currentFont}", monospace`;
+}
+
+function clampNumber(value, min, max) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return min;
+  return Math.min(max, Math.max(min, n));
+}
+
+function updateTrailFromSetting(value) {
+  // Map 0..100 => alpha 0.38..0.06 (higher alpha clears more = shorter trail)
+  currentTrail = clampNumber(value, 0, 100);
+  const maxAlpha = 0.38;
+  const minAlpha = 0.06;
+  const t = currentTrail / 100;
+  const alpha = maxAlpha - t * (maxAlpha - minAlpha);
+  trailFillStyle = `rgba(0, 0, 0, ${alpha})`;
 }
 
 function resizeCanvas() {
@@ -301,6 +323,24 @@ function populateFontSelector() {
   densitySlider.addEventListener('input', (e) => {
     debouncedDensityUpdate(e.target.value);
   });
+
+  // Trail strength (0..100)
+  const trailSlider = document.getElementById('trailSlider');
+  const trailLabel = document.getElementById('trailLabel');
+  if (trailSlider && trailLabel) {
+    trailSlider.value = currentTrail;
+    trailLabel.textContent = currentTrail + '%';
+
+    const debouncedTrailUpdate = debounce((value) => {
+      updateTrailFromSetting(value);
+      trailLabel.textContent = currentTrail + '%';
+      savePreferences();
+    }, 80);
+
+    trailSlider.addEventListener('input', (e) => {
+      debouncedTrailUpdate(e.target.value);
+    });
+  }
 
   // Add color theme selector
   const colorThemeSelector = document.getElementById('colorTheme');
@@ -489,6 +529,7 @@ function initializeApp() {
   currentFont = prefs.font;
   currentFontSize = prefs.fontSize;
   currentDensity = prefs.density;
+  updateTrailFromSetting(prefs.trail ?? 35);
   currentColorTheme = prefs.colorTheme;
   dataMode = prefs.dataMode || false;
   matrixVisible = prefs.matrixVisible !== false;
@@ -537,7 +578,7 @@ function initializeApp() {
       // Trail effect (reset shadow first so the clear pass isn't "glowy")
       ctx.shadowBlur = 0;
       ctx.shadowColor = 'transparent';
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.20)';
+      ctx.fillStyle = trailFillStyle;
       ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
       const theme = getTheme();
