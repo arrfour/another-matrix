@@ -82,6 +82,8 @@
       color: var(--theme-color);
       max-width: 280px;
       transition: border-color 0.3s, color 0.3s;
+      display: flex;
+      flex-direction: column;
     }
 
     #controlHeader {
@@ -102,6 +104,7 @@
       transition: all 0.3s ease;
       max-height: 1000px;
       overflow: hidden;
+      order: 1;
     }
 
     #controlContent.collapsed {
@@ -179,7 +182,8 @@
     .button-group {
       display: flex;
       gap: 4px;
-      margin-bottom: 12px;
+      margin-top: 12px;
+      order: 2;
     }
 
     .glyph-btn {
@@ -213,13 +217,6 @@
   <div id="matrix"></div>
 
   <div id="controlPanel">
-    <div class="button-group">
-      <button id="toggleBtn" class="glyph-btn" title="Toggle panel">−</button>
-      <button id="resetBtn" class="glyph-btn" title="Reset to defaults">↻</button>
-      <button id="saveDefaultBtn" class="glyph-btn" title="Save as default">💾</button>
-      <button id="refreshBtn" class="glyph-btn" title="Refresh">⟲</button>
-    </div>
-    
     <div id="controlContent">
       <div class="control-row">
         <label for="fontDropdown">Font:</label>
@@ -228,13 +225,13 @@
       
       <div class="control-row">
         <label for="sizeSlider">Size:</label>
-        <input type="range" id="sizeSlider" min="8" max="32" value="14">
+        <input type="range" id="sizeSlider" min="8" max="60" value="14">
         <span id="sizeLabel" class="value-label">14px</span>
       </div>
 
       <div class="control-row">
         <label for="densitySlider">Density:</label>
-        <input type="range" id="densitySlider" min="20" max="200" value="80" step="10">
+        <input type="range" id="densitySlider" min="25" max="500" value="80" step="5">
         <span id="densityLabel" class="value-label">80</span>
       </div>
 
@@ -253,6 +250,13 @@
         <label for="dataModeToggle">Data Mode:</label>
         <input type="checkbox" id="dataModeToggle" style="width: 16px; height: 16px; cursor: pointer;">
       </div>
+    </div>
+
+    <div class="button-group">
+      <button id="resetBtn" class="glyph-btn" title="Reset to defaults">↻</button>
+      <button id="saveDefaultBtn" class="glyph-btn" title="Save as default">💾</button>
+      <button id="refreshBtn" class="glyph-btn" title="Refresh">⟲</button>
+      <button id="toggleBtn" class="glyph-btn" title="Toggle panel">−</button>
     </div>
   </div>
 
