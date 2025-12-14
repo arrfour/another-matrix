@@ -20,7 +20,7 @@ A browser-based visual effect inspired by the iconic "digital rain" from The Mat
 ## Project Structure
 
 ```
-gemma3-4b-matrix/
+root-folder/
 ├── index.html      # HTML structure and styling
 ├── script.js       # Animation logic and controls
 └── README.md       # This file
