@@ -1,30 +1,21 @@
-// Font detection
 const fontList = ['Monaco', 'Menlo', 'Courier New', 'Inconsolata', 'Courier', 'monospace'];
 let currentFont = 'monospace';
 let currentFontSize = 14;
 let currentDensity = 80;
 let currentColorTheme = 'green';
-let dataMode = false; // Toggle for hex/binary data display
-let matrixVisible = true; // Toggle for matrix display visibility
+let dataMode = false;
+let matrixVisible = true; // faucet: ON/OFF
 
-// Global character set and pixel storage
 const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-const pixels = [];
-let matrixDiv = null; // Will be initialized when DOM loads
 
-// Data encoding helpers for 4-bit (nibble) and 8-bit (byte) display
-function generateRandomByte() {
-  return Math.floor(Math.random() * 256);
-}
+let canvas = null;
+let ctx = null;
+let dpr = 1;
+let canvasWidth = 0;
+let canvasHeight = 0;
 
-function byteToHex(byte) {
-  return byte.toString(16).toUpperCase().padStart(2, '0');
-}
-
-function generateRandomDataSequence(length = 3) {
-  // In data mode, return a single random bit (0 or 1)
-  return Math.random() < 0.5 ? '0' : '1';
-}
+// Canvas particles (one per character)
+const particles = [];
 
 // Color themes
 const colorThemes = {
@@ -171,9 +162,8 @@ function applyTheme(colorTheme) {
   root.style.setProperty('--theme-glow', theme.glow);
 }
 
-// Performance optimization: throttle animation frame updates
-let lastFrameTime = 0;
-const FRAME_INTERVAL = 33; // ~30fps instead of 60fps
+// Throttle animation frame updates
+const FRAME_INTERVAL = 33; // ~30fps
 
 // Debounce helper for slider updates
 function debounce(func, delay) {
@@ -182,6 +172,54 @@ function debounce(func, delay) {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
   };
+}
+
+function getTheme() {
+  return colorThemes[currentColorTheme] || colorThemes.green;
+}
+
+function randomChar() {
+  return dataMode ? (Math.random() < 0.5 ? '0' : '1') : chars[Math.floor(Math.random() * chars.length)];
+}
+
+function getCanvasFont() {
+  // Quotes are fine even for generic families, and help with names like Courier New.
+  return `${currentFontSize}px "${currentFont}", monospace`;
+}
+
+function resizeCanvas() {
+  if (!canvas || !ctx) return;
+  dpr = window.devicePixelRatio || 1;
+  canvasWidth = Math.max(1, Math.floor(window.innerWidth));
+  canvasHeight = Math.max(1, Math.floor(window.innerHeight));
+  canvas.width = Math.floor(canvasWidth * dpr);
+  canvas.height = Math.floor(canvasHeight * dpr);
+  canvas.style.width = canvasWidth + 'px';
+  canvas.style.height = canvasHeight + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.textBaseline = 'top';
+}
+
+function spawnParticle({ atTop } = { atTop: false }) {
+  const x = Math.random() * canvasWidth;
+  const y = atTop ? (-20 - Math.random() * 120) : (Math.random() * canvasHeight);
+  particles.push({
+    x,
+    y,
+    speed: 2 + Math.random() * 6,
+    char: randomChar(),
+    nextChange: Math.random() * 100
+  });
+}
+
+function trimToDensity() {
+  while (particles.length > currentDensity) particles.pop();
+}
+
+function setCursorVisible(visible) {
+  const cursor = document.getElementById('cursor');
+  if (!cursor) return;
+  cursor.classList.toggle('visible', visible);
 }
 
 function detectSystemFont() {
@@ -228,7 +266,6 @@ function populateFontSelector() {
   
   selector.addEventListener('change', (e) => {
     currentFont = e.target.value;
-    updatePixelFonts();
     savePreferences();
   });
   
@@ -241,7 +278,6 @@ function populateFontSelector() {
   const debouncedSizeUpdate = debounce((value) => {
     currentFontSize = parseInt(value);
     sizeLabel.textContent = currentFontSize + 'px';
-    updatePixelFonts();
     savePreferences();
   }, 100);
   
@@ -258,7 +294,7 @@ function populateFontSelector() {
   const debouncedDensityUpdate = debounce((value) => {
     currentDensity = parseInt(value);
     densityLabel.textContent = currentDensity;
-    updateDensity(currentDensity);
+    trimToDensity();
     savePreferences();
   }, 150);
   
@@ -271,9 +307,7 @@ function populateFontSelector() {
   colorThemeSelector.value = currentColorTheme;
   colorThemeSelector.addEventListener('change', (e) => {
     currentColorTheme = e.target.value;
-    updatePixelColors();
-    // Reset characters to make color change more noticeable
-    resetAllCharacters();
+    applyTheme(currentColorTheme);
     savePreferences();
   });
 
@@ -282,13 +316,11 @@ function populateFontSelector() {
   dataModeToggle.checked = dataMode;
   dataModeToggle.addEventListener('change', (e) => {
     dataMode = e.target.checked;
-    resetAllCharacters();
     savePreferences();
   });
 
   // Add matrix display toggle
   const matrixToggleBtn = document.getElementById('matrixToggleBtn');
-  const matrix = document.getElementById('matrix');
   const cursor = document.getElementById('cursor');
   
   matrixToggleBtn.addEventListener('click', () => {
@@ -300,14 +332,13 @@ function populateFontSelector() {
       matrixToggleBtn.style.opacity = '1';
     } else {
       // Water faucet OFF: freeze animation, show cursor
-      cursor.classList.add('visible');
+      // Cursor shows when the last characters finish draining.
       matrixToggleBtn.style.opacity = '0.5';
     }
     savePreferences();
   });
   // Set initial button state
   if (!matrixVisible) {
-    cursor.classList.add('visible');
     matrixToggleBtn.style.opacity = '0.5';
   }
 
@@ -451,102 +482,6 @@ function populateFontSelector() {
   });
 }
 
-function updatePixelFonts() {
-  const pixelElements = document.querySelectorAll('.pixel');
-  pixelElements.forEach(pixel => {
-    pixel.style.fontFamily = currentFont;
-    pixel.style.fontSize = currentFontSize + 'px';
-  });
-  
-  // Update control panel font
-  const controlPanel = document.getElementById('controlPanel');
-  controlPanel.style.fontFamily = currentFont + ', monospace';
-  
-  // Also update selects and inputs in control panel
-  const inputs = controlPanel.querySelectorAll('select, input[type="range"], button, label');
-  inputs.forEach(input => {
-    input.style.fontFamily = currentFont + ', monospace';
-  });
-}
-
-function updatePixelColors() {
-  const theme = colorThemes[currentColorTheme];
-  const pixelElements = document.querySelectorAll('.pixel');
-  pixelElements.forEach(pixel => {
-    pixel.style.color = theme.color;
-    pixel.style.textShadow = `0 0 3px ${theme.glow}`;
-  });
-  
-  // Update CSS variables for control panel and all elements
-  applyTheme(currentColorTheme);
-}
-
-function updateControlPanelColor() {
-  // CSS variables now handle all styling automatically
-  // This function is kept for compatibility but is now minimal
-  applyTheme(currentColorTheme);
-}
-
-function resetAllCharacters() {
-  // Reset all characters to make color/visual changes more dynamic
-  pixels.forEach(p => {
-    if (dataMode) {
-      p.textContent = generateRandomDataSequence(3);
-    } else {
-      p.textContent = chars[Math.floor(Math.random() * chars.length)];
-    }
-    // Reset position to top with new random x for more visible change
-    p.y = -20 + Math.random() * 100;
-    p.x = Math.random() * window.innerWidth;
-  });
-}
-
-function updateDensity(newDensity) {
-  const matrixDiv = document.getElementById('matrix');
-  const difference = newDensity - pixels.length;
-  
-  if (difference > 0) {
-    // Add new pixels
-    for (let i = 0; i < difference; i++) {
-      addPixel();
-    }
-  } else if (difference < 0) {
-    // Remove pixels
-    for (let i = 0; i < Math.abs(difference); i++) {
-      const pixel = pixels.pop();
-      if (pixel) {
-        pixel.element.remove();
-      }
-    }
-  }
-}
-
-function addPixel() {
-  const pixel = document.createElement('div');
-  pixel.classList.add('pixel');
-  
-  const x = Math.random() * window.innerWidth;
-  const y = Math.random() * window.innerHeight;
-  const speed = 2 + Math.random() * 6;
-  const opacity = 0.3 + Math.random() * 0.7;
-  
-  pixel.style.opacity = opacity;
-  pixel.style.fontFamily = currentFont;
-  pixel.style.fontSize = currentFontSize + 'px';
-  const theme = colorThemes[currentColorTheme];
-  pixel.style.color = theme.color;
-  pixel.style.textShadow = `0 0 3px ${theme.glow}`;
-  pixel.style.transform = `translate(${x}px, ${y}px)`;
-  if (dataMode) {
-    pixel.textContent = generateRandomDataSequence(3);
-  } else {
-    pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
-  }
-  
-  matrixDiv.appendChild(pixel);
-  pixels.push({ element: pixel, speed: speed, x: x, y: y, lastX: x, lastY: y, nextCharChange: Math.random() * 100 });
-}
-
 // Wait for DOM to be ready before initializing
 function initializeApp() {
   // Initialize
@@ -560,121 +495,101 @@ function initializeApp() {
 
   detectSystemFont();
   populateFontSelector();
-  applyTheme(currentColorTheme); // Apply initial theme
+  applyTheme(currentColorTheme);
 
-  matrixDiv = document.getElementById('matrix');
-  const numPixels = 80; // Initial density
+  canvas = document.getElementById('matrix');
+  ctx = canvas?.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
 
-  // Create the falling characters
-  for (let i = 0; i < numPixels; i++) {
-    const pixel = document.createElement('div');
-    pixel.classList.add('pixel');
-    
-    const x = Math.random() * window.innerWidth;
-    const y = Math.random() * window.innerHeight;
-    const speed = 2 + Math.random() * 6;
-    const opacity = 0.3 + Math.random() * 0.7;
-    
-    pixel.style.opacity = opacity;
-    pixel.style.fontFamily = currentFont;
-    pixel.style.fontSize = currentFontSize + 'px';
-    const theme = colorThemes[currentColorTheme];
-    pixel.style.color = theme.color;
-    pixel.style.textShadow = `0 0 3px ${theme.glow}`;
-    pixel.style.transform = `translate(${x}px, ${y}px)`;
-    
-    // Set content based on mode
-    if (dataMode) {
-      pixel.textContent = generateRandomDataSequence(3);
-    } else {
-      pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
-    }
-    
-    matrixDiv.appendChild(pixel);
-    pixels.push({ element: pixel, speed: speed, x: x, y: y, lastX: x, lastY: y, nextCharChange: Math.random() * 100 });
-  }
+  // Start full (so initial load looks like a running system)
+  for (let i = 0; i < currentDensity; i++) spawnParticle({ atTop: false });
+  trimToDensity();
 
-  // Animation loop with frame throttling
   let lastUpdate = 0;
-  let regenerationCounter = 0; // Counter to gradually add characters when faucet turns back ON
-  
+  let regenCounter = 0;
+
   function animate() {
     const now = performance.now();
-    
-    // Only update every FRAME_INTERVAL milliseconds (~30fps)
     if (now - lastUpdate >= FRAME_INTERVAL) {
       lastUpdate = now;
-      
-      // Gradually regenerate characters when faucet is turned back ON
-      if (matrixVisible && pixels.length < currentDensity) {
-        regenerationCounter++;
-        // Add one character every few frames for natural flow
-        if (regenerationCounter > 5) {
-          addPixel();
-          regenerationCounter = 0;
+
+      // Cursor only appears when the matrix has fully drained.
+      setCursorVisible(!matrixVisible && particles.length === 0);
+
+      // If faucet ON, slowly refill to target density.
+      if (matrixVisible && particles.length < currentDensity) {
+        regenCounter++;
+        if (regenCounter > 5) {
+          spawnParticle({ atTop: true });
+          regenCounter = 0;
         }
       } else if (!matrixVisible) {
-        // Reset counter when faucet is OFF
-        regenerationCounter = 0;
+        regenCounter = 0;
       }
-      
-      for (let i = 0; i < pixels.length; i++) {
-        const p = pixels[i];
+
+      // When nothing to draw and faucet is OFF, keep canvas black.
+      if (!ctx) {
+        requestAnimationFrame(animate);
+        return;
+      }
+
+      // Trail effect
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      const theme = getTheme();
+      ctx.font = getCanvasFont();
+      ctx.fillStyle = theme.color;
+      ctx.shadowColor = theme.glow;
+      ctx.shadowBlur = 8;
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+
+        // Drain always moves; OFF just stops recycling + char changes.
         p.y += p.speed;
-        
-        // Reset to top when falling off screen (only if matrix is visible/ON)
-        if (p.y > window.innerHeight) {
-          if (matrixVisible) {
-            // Faucet ON: recycled characters reappear at top
-            p.y = -20;
-            p.x = Math.random() * window.innerWidth;
-            p.lastX = p.x;
-            p.lastY = p.y;
-            
-            // Update character and styling when reset
-            if (dataMode) {
-              p.element.textContent = generateRandomDataSequence(3);
-            } else {
-              p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
-            }
-            const theme = colorThemes[currentColorTheme];
-            p.element.style.color = theme.color;
-            p.element.style.textShadow = `0 0 3px ${theme.glow}`;
-            p.element.style.transform = `translate(${p.x}px, ${p.y}px)`;
-            p.nextCharChange = Math.random() * 100;
-          } else {
-            // Faucet OFF: remove pixels that fall off (no recycling)
-            p.element.remove();
-            pixels.splice(i, 1);
-            i--; // Adjust index after removal
-          }
-        } else {
-          // Only update transform if position changed significantly (reduces DOM writes)
-          if (Math.abs(p.x - p.lastX) > 0.5 || Math.abs(p.y - p.lastY) > 0.5) {
-            p.element.style.transform = `translate(${p.x}px, ${p.y}px)`;
-            p.lastX = p.x;
-            p.lastY = p.y;
-          }
-          
-          // Character change with batched counter (only if matrix is visible/ON)
-          if (matrixVisible) {
-            p.nextCharChange--;
-            if (p.nextCharChange <= 0) {
-              if (dataMode) {
-                p.element.textContent = generateRandomDataSequence(3);
-              } else {
-                p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
-              }
-              p.nextCharChange = Math.random() * 100;
-            }
+
+        if (matrixVisible) {
+          p.nextChange--;
+          if (p.nextChange <= 0) {
+            p.char = randomChar();
+            p.nextChange = Math.random() * 100;
           }
         }
+
+        // Off-screen handling
+        if (p.y > canvasHeight + 30) {
+          if (matrixVisible) {
+            p.y = -20 - Math.random() * 120;
+            p.x = Math.random() * canvasWidth;
+            if (dataMode) p.char = randomChar();
+            p.nextChange = Math.random() * 100;
+          } else {
+            // remove (swap-with-last)
+            const last = particles.pop();
+            if (last && i < particles.length) particles[i] = last;
+            i--;
+            continue;
+          }
+        }
+
+        ctx.fillText(p.char, p.x, p.y);
+      }
+
+      // Keep CPU minimal when fully drained.
+      if (!matrixVisible && particles.length === 0) {
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
       }
     }
     requestAnimationFrame(animate);
   }
 
-  animate(); // Start the animation
+  // Ensure initial cursor state is consistent.
+  setCursorVisible(!matrixVisible && particles.length === 0);
+  animate();
 }
 
 // Initialize when DOM is ready
