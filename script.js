@@ -330,14 +330,14 @@ function populateFontSelector() {
 
   readmeBtn.addEventListener('click', async () => {
     try {
-      const response = await fetch('README.md');
-      if (!response.ok) throw new Error('Failed to fetch README');
+      const response = await fetch('./README.md');
+      if (!response.ok) throw new Error(`Failed to fetch README: ${response.status}`);
       const markdown = await response.text();
       readmeContent.innerHTML = markdownToHtml(markdown);
       readmeModal.classList.add('visible');
     } catch (error) {
       console.error('Error loading README:', error);
-      readmeContent.innerHTML = '<p style="color: #f00;">Failed to load README file</p>';
+      readmeContent.innerHTML = '<p style="color: #f00;">Failed to load README file: ' + error.message + '</p>';
       readmeModal.classList.add('visible');
     }
   });
