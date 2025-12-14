@@ -21,17 +21,8 @@ function byteToHex(byte) {
 }
 
 function generateRandomDataSequence(length = 3) {
-  // Generate sequence of bytes as individual bits stacked vertically
-  const bits = [];
-  for (let i = 0; i < length; i++) {
-    const byte = generateRandomByte();
-    // Convert byte to 8-bit binary string, then split each bit onto its own line
-    const binaryStr = byte.toString(2).padStart(8, '0');
-    for (let bit of binaryStr) {
-      bits.push(bit);
-    }
-  }
-  return bits.join('\n'); // Each bit on its own line: "1\n0\n1\n1\n0\n1\n0\n1\n..." etc
+  // In data mode, return a single random bit (0 or 1)
+  return Math.random() < 0.5 ? '0' : '1';
 }
 
 // Color themes
