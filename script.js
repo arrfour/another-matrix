@@ -17,6 +17,7 @@ const colorThemes = {
 // LocalStorage management for preferences
 const STORAGE_KEY = 'matrixEffectPreferences';
 const DEFAULTS_STORAGE_KEY = 'matrixEffectDefaults';
+const COLLAPSE_STATE_KEY = 'matrixEffectCollapseState';
 
 function loadPreferences() {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -74,7 +75,18 @@ function saveAsDefault() {
 function resetPreferences() {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(DEFAULTS_STORAGE_KEY);
+  localStorage.removeItem(COLLAPSE_STATE_KEY);
   location.reload();
+}
+
+// Collapse state management
+function loadCollapseState() {
+  const stored = localStorage.getItem(COLLAPSE_STATE_KEY);
+  return stored === 'true'; // Default to true (collapsed/closed)
+}
+
+function saveCollapseState(isCollapsed) {
+  localStorage.setItem(COLLAPSE_STATE_KEY, isCollapsed.toString());
 }
 
 // CSS Variable management for theming
@@ -210,15 +222,27 @@ function populateFontSelector() {
   const controlHeader = document.getElementById('controlHeader');
   const controlContent = document.getElementById('controlContent');
   const toggleIcon = document.getElementById('toggleIcon');
+  
+  // Load and apply saved collapse state on page load
+  const isCollapsed = loadCollapseState();
+  if (isCollapsed) {
+    controlContent.classList.add('collapsed');
+    toggleIcon.textContent = '+';
+  }
 
   controlHeader.addEventListener('click', () => {
     controlContent.classList.toggle('collapsed');
-    toggleIcon.textContent = controlContent.classList.contains('collapsed') ? '+' : '−';
+    const nowCollapsed = controlContent.classList.contains('collapsed');
+    toggleIcon.textContent = nowCollapsed ? '+' : '−';
+    saveCollapseState(nowCollapsed);
   });
 
   // Add refresh button functionality
   const refreshBtn = document.getElementById('refreshBtn');
   refreshBtn.addEventListener('click', () => {
+    // Save current collapse state before reload
+    const controlContent = document.getElementById('controlContent');
+    saveCollapseState(controlContent.classList.contains('collapsed'));
     location.reload();
   });
 }
