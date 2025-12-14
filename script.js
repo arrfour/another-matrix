@@ -6,8 +6,6 @@ let currentDensity = 80;
 let currentColorTheme = 'green';
 let dataMode = false; // Toggle for hex/binary data display
 let matrixVisible = true; // Toggle for matrix display visibility
-let animationRunning = true; // Control animation loop
-let matrixVisible = true; // Toggle for matrix display visibility
 
 // Global character set and pixel storage
 const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -145,7 +143,7 @@ function saveAsDefault() {
     dataMode: dataMode,
     matrixVisible: matrixVisible
   };
-  localStorage.setItem(DEFAULTS_STORAGE_KEY, JSON.stringify(newDefaults));
+  localStorage.setItem(DEFAULTS_STORAGE_KEY, JSON.stringify(customDefaults));
 }
 
 function resetPreferences() {
