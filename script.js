@@ -294,11 +294,12 @@ function populateFontSelector() {
   matrixToggleBtn.addEventListener('click', () => {
     matrixVisible = !matrixVisible;
     if (matrixVisible) {
-      matrix.style.display = 'block';
+      // Water faucet ON: resume animation, hide cursor
+      // Don't need to regenerate - animation will naturally refill as recycling resumes
       cursor.classList.remove('visible');
       matrixToggleBtn.style.opacity = '1';
     } else {
-      matrix.style.display = 'none';
+      // Water faucet OFF: freeze animation, show cursor
       cursor.classList.add('visible');
       matrixToggleBtn.style.opacity = '0.5';
     }
@@ -306,7 +307,6 @@ function populateFontSelector() {
   });
   // Set initial button state
   if (!matrixVisible) {
-    matrix.style.display = 'none';
     cursor.classList.add('visible');
     matrixToggleBtn.style.opacity = '0.5';
   }
@@ -329,6 +329,8 @@ function populateFontSelector() {
   // Add control panel toggle functionality
   const toggleBtn = document.getElementById('toggleBtn');
   const controlContent = document.getElementById('controlContent');
+  const controlPanel = document.getElementById('controlPanel');
+  let fadeTimeout;
   
   // Load and apply saved collapse state on page load
   const isCollapsed = loadCollapseState();
@@ -340,6 +342,25 @@ function populateFontSelector() {
     controlContent.classList.toggle('collapsed');
     const nowCollapsed = controlContent.classList.contains('collapsed');
     saveCollapseState(nowCollapsed);
+    
+    // Keep panel visible when toggling
+    controlPanel.classList.remove('faded');
+    clearTimeout(fadeTimeout);
+  });
+
+  // Fade out on mouse leave (only when collapsed)
+  controlPanel.addEventListener('mouseleave', () => {
+    if (controlContent.classList.contains('collapsed')) {
+      fadeTimeout = setTimeout(() => {
+        controlPanel.classList.add('faded');
+      }, 2000); // 2 second delay before fading
+    }
+  });
+
+  // Keep visible on mouse enter
+  controlPanel.addEventListener('mouseenter', () => {
+    clearTimeout(fadeTimeout);
+    controlPanel.classList.remove('faded');
   });
 
   // Add refresh button functionality
@@ -575,6 +596,8 @@ function initializeApp() {
 
   // Animation loop with frame throttling
   let lastUpdate = 0;
+  let regenerationCounter = 0; // Counter to gradually add characters when faucet turns back ON
+  
   function animate() {
     const now = performance.now();
     
@@ -582,28 +605,49 @@ function initializeApp() {
     if (now - lastUpdate >= FRAME_INTERVAL) {
       lastUpdate = now;
       
+      // Gradually regenerate characters when faucet is turned back ON
+      if (matrixVisible && pixels.length < currentDensity) {
+        regenerationCounter++;
+        // Add one character every few frames for natural flow
+        if (regenerationCounter > 5) {
+          addPixel();
+          regenerationCounter = 0;
+        }
+      } else if (!matrixVisible) {
+        // Reset counter when faucet is OFF
+        regenerationCounter = 0;
+      }
+      
       for (let i = 0; i < pixels.length; i++) {
         const p = pixels[i];
         p.y += p.speed;
         
-        // Reset to top when falling off screen
+        // Reset to top when falling off screen (only if matrix is visible/ON)
         if (p.y > window.innerHeight) {
-          p.y = -20;
-          p.x = Math.random() * window.innerWidth;
-          p.lastX = p.x;
-          p.lastY = p.y;
-          
-          // Update character and styling when reset
-          if (dataMode) {
-            p.element.textContent = generateRandomDataSequence(3);
+          if (matrixVisible) {
+            // Faucet ON: recycled characters reappear at top
+            p.y = -20;
+            p.x = Math.random() * window.innerWidth;
+            p.lastX = p.x;
+            p.lastY = p.y;
+            
+            // Update character and styling when reset
+            if (dataMode) {
+              p.element.textContent = generateRandomDataSequence(3);
+            } else {
+              p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+            }
+            const theme = colorThemes[currentColorTheme];
+            p.element.style.color = theme.color;
+            p.element.style.textShadow = `0 0 3px ${theme.glow}`;
+            p.element.style.transform = `translate(${p.x}px, ${p.y}px)`;
+            p.nextCharChange = Math.random() * 100;
           } else {
-            p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+            // Faucet OFF: remove pixels that fall off (no recycling)
+            p.element.remove();
+            pixels.splice(i, 1);
+            i--; // Adjust index after removal
           }
-          const theme = colorThemes[currentColorTheme];
-          p.element.style.color = theme.color;
-          p.element.style.textShadow = `0 0 3px ${theme.glow}`;
-          p.element.style.transform = `translate(${p.x}px, ${p.y}px)`;
-          p.nextCharChange = Math.random() * 100;
         } else {
           // Only update transform if position changed significantly (reduces DOM writes)
           if (Math.abs(p.x - p.lastX) > 0.5 || Math.abs(p.y - p.lastY) > 0.5) {
@@ -612,15 +656,17 @@ function initializeApp() {
             p.lastY = p.y;
           }
           
-          // Character change with batched counter (less frequent checks)
-          p.nextCharChange--;
-          if (p.nextCharChange <= 0) {
-            if (dataMode) {
-              p.element.textContent = generateRandomDataSequence(3);
-            } else {
-              p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+          // Character change with batched counter (only if matrix is visible/ON)
+          if (matrixVisible) {
+            p.nextCharChange--;
+            if (p.nextCharChange <= 0) {
+              if (dataMode) {
+                p.element.textContent = generateRandomDataSequence(3);
+              } else {
+                p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+              }
+              p.nextCharChange = Math.random() * 100;
             }
-            p.nextCharChange = Math.random() * 100;
           }
         }
       }

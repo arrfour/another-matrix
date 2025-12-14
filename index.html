@@ -81,9 +81,18 @@
       font-size: 11px;
       color: var(--theme-color);
       max-width: 280px;
-      transition: border-color 0.3s, color 0.3s;
+      transition: border-color 0.3s, color 0.3s, opacity 0.5s ease;
       display: flex;
       flex-direction: column;
+      opacity: 1;
+    }
+
+    #controlPanel.faded {
+      opacity: 0.3;
+    }
+
+    #controlPanel.faded:hover {
+      opacity: 1;
     }
 
     #controlHeader {
