@@ -21,12 +21,12 @@ function byteToHex(byte) {
 }
 
 function generateRandomDataSequence(length = 3) {
-  // Generate sequence of bytes formatted as hex pairs
+  // Generate sequence of bytes formatted as hex pairs, stacked vertically
   const bytes = [];
   for (let i = 0; i < length; i++) {
     bytes.push(byteToHex(generateRandomByte()));
   }
-  return bytes.join(' '); // "F3 A8 D2" format
+  return bytes.join('\n'); // "F3\nA8\nD2" format for vertical display
 }
 
 // Color themes
