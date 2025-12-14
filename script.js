@@ -494,7 +494,7 @@ function addPixel() {
   }
   
   matrixDiv.appendChild(pixel);
-  pixels.push({ element: pixel, speed: speed, x: x, y: y });
+  pixels.push({ element: pixel, speed: speed, x: x, y: y, lastX: x, lastY: y, nextCharChange: Math.random() * 100 });
 }
 
 // Wait for DOM to be ready before initializing
@@ -540,7 +540,7 @@ function initializeApp() {
     }
     
     matrixDiv.appendChild(pixel);
-    pixels.push({ element: pixel, speed: speed, x: x, y: y });
+    pixels.push({ element: pixel, speed: speed, x: x, y: y, lastX: x, lastY: y, nextCharChange: Math.random() * 100 });
   }
 
   // Animation loop with frame throttling
@@ -560,26 +560,37 @@ function initializeApp() {
         if (p.y > window.innerHeight) {
           p.y = -20;
           p.x = Math.random() * window.innerWidth;
+          p.lastX = p.x;
+          p.lastY = p.y;
+          
+          // Update character and styling when reset
           if (dataMode) {
             p.element.textContent = generateRandomDataSequence(3);
           } else {
             p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
           }
-          // Update color to current theme when character resets
           const theme = colorThemes[currentColorTheme];
           p.element.style.color = theme.color;
           p.element.style.textShadow = `0 0 3px ${theme.glow}`;
-        }
-        
-        // Use transform for GPU acceleration instead of top/left
-        p.element.style.transform = `translate(${p.x}px, ${p.y}px)`;
-        
-        // Randomly change character (reduced frequency)
-        if (Math.random() < 0.01) {
-          if (dataMode) {
-            p.element.textContent = generateRandomDataSequence(3);
-          } else {
-            p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+          p.element.style.transform = `translate(${p.x}px, ${p.y}px)`;
+          p.nextCharChange = Math.random() * 100;
+        } else {
+          // Only update transform if position changed significantly (reduces DOM writes)
+          if (Math.abs(p.x - p.lastX) > 0.5 || Math.abs(p.y - p.lastY) > 0.5) {
+            p.element.style.transform = `translate(${p.x}px, ${p.y}px)`;
+            p.lastX = p.x;
+            p.lastY = p.y;
+          }
+          
+          // Character change with batched counter (less frequent checks)
+          p.nextCharChange--;
+          if (p.nextCharChange <= 0) {
+            if (dataMode) {
+              p.element.textContent = generateRandomDataSequence(3);
+            } else {
+              p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+            }
+            p.nextCharChange = Math.random() * 100;
           }
         }
       }
