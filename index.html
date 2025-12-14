@@ -339,6 +339,94 @@
       background-color: transparent;
       padding: 0;
     }
+
+    #quoteModal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.95);
+      border: 2px solid var(--theme-color);
+      border-radius: 8px;
+      padding: 20px;
+      z-index: 2000;
+      max-width: 70vw;
+      max-height: 80vh;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    }
+
+    #quoteModal.visible {
+      display: flex;
+    }
+
+    #quoteModalHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--theme-color);
+    }
+
+    #quoteModalTitle {
+      color: var(--theme-color);
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    #quoteCloseBtn {
+      background-color: transparent;
+      border: 1px solid var(--theme-color);
+      border-radius: 3px;
+      color: var(--theme-color);
+      font-family: monospace;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px 8px;
+      transition: all 0.3s;
+    }
+
+    #quoteCloseBtn:hover {
+      background-color: rgba(255, 0, 0, 0.2);
+      text-shadow: 0 0 10px #f00;
+    }
+
+    #quoteCloseBtn:active {
+      background-color: rgba(255, 0, 0, 0.4);
+    }
+
+    #quoteContent {
+      overflow-y: auto;
+      overflow-x: hidden;
+      color: var(--theme-color);
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      max-height: calc(80vh - 80px);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #quoteContent .quote-text {
+      font-style: italic;
+      color: rgba(0, 255, 0, 0.9);
+      margin-bottom: 20px;
+      max-width: 90%;
+    }
+
+    #quoteContent .quote-attribution {
+      color: var(--theme-glow);
+      font-size: 11px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -385,6 +473,7 @@
       <button id="saveDefaultBtn" class="glyph-btn" title="Save as default">💾</button>
       <button id="refreshBtn" class="glyph-btn" title="Refresh">⟲</button>
       <button id="readmeBtn" class="glyph-btn" title="View README">ℹ</button>
+      <button id="quoteBtn" class="glyph-btn" title="View Quote">«</button>
       <button id="toggleBtn" class="glyph-btn" title="Toggle panel">−</button>
     </div>
   </div>
@@ -397,9 +486,19 @@
     <div id="readmeContent"></div>
   </div>
 
-  <script type="text/markdown" id="readmeText"># Matrix Rain Effect
+  <div id="quoteModal">
+    <div id="quoteModalHeader">
+      <h2 id="quoteModalTitle">Inspiration</h2>
+      <button id="quoteCloseBtn" title="Close">✕</button>
+    </div>
+    <div id="quoteContent"></div>
+  </div>
 
-> "And I urge you to please notice when you are happy, and exclaim or murmur or think at some point, 'If this isn't nice, I don't know what is.'" — Kurt Vonnegut
+  <script type="text/plain" id="quoteText">"And I urge you to please notice when you are happy, and exclaim or murmur or think at some point, 'If this isn't nice, I don't know what is.'"</script>
+
+  <script type="text/plain" id="quoteAttribution">— Kurt Vonnegut</script>
+
+  <script type="text/markdown" id="readmeText"># Matrix Rain Effect
 
 A browser-based visual effect inspired by the iconic "digital rain" from The Matrix. Features cascading characters with fully customizable fonts, sizes, density, and color themes.
 

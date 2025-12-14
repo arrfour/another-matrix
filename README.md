@@ -1,7 +1,5 @@
 # Matrix Rain Effect
 
-> "And I urge you to please notice when you are happy, and exclaim or murmur or think at some point, 'If this isn't nice, I don't know what is.'" — Kurt Vonnegut
-
 A browser-based visual effect inspired by the iconic "digital rain" from The Matrix. Features cascading characters with fully customizable fonts, sizes, density, and color themes.
 
 ## Features

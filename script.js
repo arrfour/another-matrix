@@ -359,6 +359,46 @@ function populateFontSelector() {
       readmeModal.classList.remove('visible');
     }
   });
+
+  // Add Quote modal functionality
+  const quoteBtn = document.getElementById('quoteBtn');
+  const quoteModal = document.getElementById('quoteModal');
+  const quoteCloseBtn = document.getElementById('quoteCloseBtn');
+  const quoteContent = document.getElementById('quoteContent');
+
+  quoteBtn.addEventListener('click', () => {
+    // Toggle the modal visibility
+    if (quoteModal.classList.contains('visible')) {
+      // Close if already open
+      quoteModal.classList.remove('visible');
+    } else {
+      // Open if closed
+      try {
+        const quoteElement = document.getElementById('quoteText');
+        const attributionElement = document.getElementById('quoteAttribution');
+        if (!quoteElement || !attributionElement) throw new Error('Quote content not found');
+        const quoteText = quoteElement.textContent;
+        const attribution = attributionElement.textContent;
+        quoteContent.innerHTML = `<div class="quote-text">${quoteText}</div><div class="quote-attribution">${attribution}</div>`;
+        quoteModal.classList.add('visible');
+      } catch (error) {
+        console.error('Error loading quote:', error);
+        quoteContent.innerHTML = '<p style="color: #f00;">Failed to load quote: ' + error.message + '</p>';
+        quoteModal.classList.add('visible');
+      }
+    }
+  });
+
+  quoteCloseBtn.addEventListener('click', () => {
+    quoteModal.classList.remove('visible');
+  });
+
+  // Close modal when clicking outside of it
+  quoteModal.addEventListener('click', (e) => {
+    if (e.target === quoteModal) {
+      quoteModal.classList.remove('visible');
+    }
+  });
 }
 
 function updatePixelFonts() {
