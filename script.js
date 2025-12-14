@@ -21,14 +21,17 @@ function byteToHex(byte) {
 }
 
 function generateRandomDataSequence(length = 3) {
-  // Generate sequence of bytes as binary bits, stacked vertically
-  const bytes = [];
+  // Generate sequence of bytes as individual bits stacked vertically
+  const bits = [];
   for (let i = 0; i < length; i++) {
     const byte = generateRandomByte();
-    // Convert byte to 8-bit binary string
-    bytes.push(byte.toString(2).padStart(8, '0'));
+    // Convert byte to 8-bit binary string, then split each bit onto its own line
+    const binaryStr = byte.toString(2).padStart(8, '0');
+    for (let bit of binaryStr) {
+      bits.push(bit);
+    }
   }
-  return bytes.join('\n'); // "10110101\n01001011\n11110000" format for vertical display
+  return bits.join('\n'); // Each bit on its own line: "1\n0\n1\n1\n0\n1\n0\n1\n..." etc
 }
 
 // Color themes
