@@ -4,6 +4,25 @@ let currentFont = 'monospace';
 let currentFontSize = 14;
 let currentDensity = 80;
 let currentColorTheme = 'green';
+let dataMode = false; // Toggle for hex/binary data display
+
+// Data encoding helpers for 4-bit (nibble) and 8-bit (byte) display
+function generateRandomByte() {
+  return Math.floor(Math.random() * 256);
+}
+
+function byteToHex(byte) {
+  return byte.toString(16).toUpperCase().padStart(2, '0');
+}
+
+function generateRandomDataSequence(length = 3) {
+  // Generate sequence of bytes formatted as hex pairs
+  const bytes = [];
+  for (let i = 0; i < length; i++) {
+    bytes.push(byteToHex(generateRandomByte()));
+  }
+  return bytes.join(' '); // "F3 A8 D2" format
+}
 
 // Color themes
 const colorThemes = {
@@ -48,7 +67,8 @@ function getDefaultPreferences() {
     font: 'monospace',
     fontSize: 14,
     density: 80,
-    colorTheme: 'green'
+    colorTheme: 'green',
+    dataMode: false
   };
 }
 
@@ -57,7 +77,8 @@ function savePreferences() {
     font: currentFont,
     fontSize: currentFontSize,
     density: currentDensity,
-    colorTheme: currentColorTheme
+    colorTheme: currentColorTheme,
+    dataMode: dataMode
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
 }
@@ -67,7 +88,8 @@ function saveAsDefault() {
     font: currentFont,
     fontSize: currentFontSize,
     density: currentDensity,
-    colorTheme: currentColorTheme
+    colorTheme: currentColorTheme,
+    dataMode: dataMode
   };
   localStorage.setItem(DEFAULTS_STORAGE_KEY, JSON.stringify(newDefaults));
 }
@@ -203,6 +225,15 @@ function populateFontSelector() {
     savePreferences();
   });
 
+  // Add data mode toggle
+  const dataModeToggle = document.getElementById('dataModeToggle');
+  dataModeToggle.checked = dataMode;
+  dataModeToggle.addEventListener('change', (e) => {
+    dataMode = e.target.checked;
+    resetAllCharacters();
+    savePreferences();
+  });
+
   // Add reset button functionality
   const resetBtn = document.getElementById('resetBtn');
   resetBtn.addEventListener('click', () => {
@@ -286,7 +317,11 @@ function updateControlPanelColor() {
 function resetAllCharacters() {
   // Reset all characters to make color/visual changes more dynamic
   pixels.forEach(p => {
-    p.textContent = chars[Math.floor(Math.random() * chars.length)];
+    if (dataMode) {
+      p.textContent = generateRandomDataSequence(3);
+    } else {
+      p.textContent = chars[Math.floor(Math.random() * chars.length)];
+    }
     // Reset position to top with new random x for more visible change
     p.y = -20 + Math.random() * 100;
     p.x = Math.random() * window.innerWidth;
@@ -329,7 +364,11 @@ function addPixel() {
   pixel.style.color = theme.color;
   pixel.style.textShadow = `0 0 3px ${theme.glow}`;
   pixel.style.transform = `translate(${x}px, ${y}px)`;
-  pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
+  if (dataMode) {
+    pixel.textContent = generateRandomDataSequence(3);
+  } else {
+    pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
+  }
   
   matrixDiv.appendChild(pixel);
   pixels.push({ element: pixel, speed: speed, x: x, y: y });
@@ -341,6 +380,7 @@ currentFont = prefs.font;
 currentFontSize = prefs.fontSize;
 currentDensity = prefs.density;
 currentColorTheme = prefs.colorTheme;
+dataMode = prefs.dataMode || false;
 
 detectSystemFont();
 populateFontSelector();
@@ -370,7 +410,13 @@ for (let i = 0; i < numPixels; i++) {
   pixel.style.color = theme.color;
   pixel.style.textShadow = `0 0 3px ${theme.glow}`;
   pixel.style.transform = `translate(${x}px, ${y}px)`;
-  pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
+  
+  // Set content based on mode
+  if (dataMode) {
+    pixel.textContent = generateRandomDataSequence(3);
+  } else {
+    pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
+  }
   
   matrixDiv.appendChild(pixel);
   pixels.push({ element: pixel, speed: speed, x: x, y: y });
@@ -393,7 +439,11 @@ function animate() {
       if (p.y > window.innerHeight) {
         p.y = -20;
         p.x = Math.random() * window.innerWidth;
-        p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+        if (dataMode) {
+          p.element.textContent = generateRandomDataSequence(3);
+        } else {
+          p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+        }
         // Update color to current theme when character resets
         const theme = colorThemes[currentColorTheme];
         p.element.style.color = theme.color;
@@ -405,7 +455,11 @@ function animate() {
       
       // Randomly change character (reduced frequency)
       if (Math.random() < 0.01) {
-        p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+        if (dataMode) {
+          p.element.textContent = generateRandomDataSequence(3);
+        } else {
+          p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+        }
       }
     }
   }
