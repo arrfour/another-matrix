@@ -14,7 +14,8 @@ A browser-based visual effect inspired by the iconic "digital rain" from The Mat
 - **5 Color Themes**: Green, Cyan, Purple, Blue, White with automatic glow effects
 - **Data Mode**: Toggle to display individual binary bits (0s and 1s) instead of characters
 - **Collapsible Control Panel**: Remembers your preference; minimizes to button bar
-- **Intuitive Glyph Buttons**: Reset (↻), Save (💾), Refresh (⟲), and Toggle (−) controls
+- **Intuitive Glyph Buttons**: Reset (↻), Save (💾), Refresh (⟲), Info (ℹ), and Toggle (−) controls
+- **README Modal Viewer**: Click the info button (ℹ) to view documentation; toggle to hide
 - **User Preferences**: Saves all settings (font, size, density, theme, panel state, data mode) to browser storage
 - **Custom Defaults**: Save current settings as new defaults
 
@@ -33,13 +34,16 @@ gemma3-4b-matrix/
 2. Watch the characters cascade down the screen
 3. Use the control panel to customize:
    - **Font**: Select from available monospace fonts
-   - **Size**: Slider to scale characters (8-32px)
-   - **Density**: Adjust number of falling characters (20-200)
+   - **Size**: Slider to scale characters (8-60px)
+   - **Density**: Adjust number of falling characters (25-500)
    - **Color Theme**: Choose from 5 color schemes (Green, Cyan, Purple, Blue, White)
-4. **Save Current**: Click to save your current settings as defaults
-5. **Reset to Defaults**: Revert all settings to hardcoded defaults
-6. **Refresh**: Reload the page while preserving your settings
-7. **Toggle Panel**: Click the header to collapse/expand (state is remembered)
+   - **Data Mode**: Toggle to display binary bits (0s and 1s) instead of characters
+4. **Control Panel Buttons**:
+   - **↻ Reset**: Revert all settings to hardcoded defaults
+   - **💾 Save**: Save your current settings as new defaults
+   - **⟲ Refresh**: Reload the page while preserving your settings
+   - **ℹ Info**: Toggle README documentation modal on/off
+   - **−**: Collapse/expand the control panel (state is remembered)
 
 ## Technical Details
 
@@ -116,7 +120,7 @@ const FRAME_INTERVAL = 33; // milliseconds (lower = faster, higher = slower)
 
 Originally created by Gemma 3:4b local instance. Evolved through multiple iterations with CSS positioning fixes, proper animation, font detection, theme system, user preference persistence, and intuitive UI design.
 
-**Current version (v1.2)** features Data Mode for binary bit visualization, expanded control ranges (8-60px font, 25-500 density), redesigned glyph button interface, and enhanced user experience with collapsible panel state persistence.
+**Current version (v1.3)** adds README modal viewer with toggle functionality (click info button to show/hide documentation), fixes critical HTML loading issue, and improves overall stability and user experience.
 
 ## License
 
