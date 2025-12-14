@@ -21,12 +21,14 @@ function byteToHex(byte) {
 }
 
 function generateRandomDataSequence(length = 3) {
-  // Generate sequence of bytes formatted as hex pairs, stacked vertically
+  // Generate sequence of bytes as binary bits, stacked vertically
   const bytes = [];
   for (let i = 0; i < length; i++) {
-    bytes.push(byteToHex(generateRandomByte()));
+    const byte = generateRandomByte();
+    // Convert byte to 8-bit binary string
+    bytes.push(byte.toString(2).padStart(8, '0'));
   }
-  return bytes.join('\n'); // "F3\nA8\nD2" format for vertical display
+  return bytes.join('\n'); // "10110101\n01001011\n11110000" format for vertical display
 }
 
 // Color themes
