@@ -1,5 +1,7 @@
 # Matrix Rain Effect
 
+> "And I urge you to please notice when you are happy, and exclaim or murmur or think at some point, 'If this isn't nice, I don't know what is.'" — Kurt Vonnegut
+
 A browser-based visual effect inspired by the iconic "digital rain" from The Matrix. Features cascading characters with fully customizable fonts, sizes, density, and color themes.
 
 ## Features
@@ -7,13 +9,14 @@ A browser-based visual effect inspired by the iconic "digital rain" from The Mat
 - **Cascading Characters**: Animated katakana, numbers, and letters falling vertically with variable opacity for depth
 - **Font Detection**: Automatically selects the best available monospace font on your system
 - **Font Switching**: Change between Monaco, Menlo, Courier New, Inconsolata, Courier, or monospace
-- **Dynamic Size Control**: Real-time adjustment from 8px to 32px
-- **Density Control**: Adjust character count from 20 to 200 in real-time
+- **Dynamic Size Control**: Real-time adjustment from 8px to 60px
+- **Density Control**: Adjust character count from 25 to 500 in real-time
 - **5 Color Themes**: Green, Cyan, Purple, Blue, White with automatic glow effects
-- **Collapsible Control Panel**: Minimizes to just a header; remembers your preference
-- **User Preferences**: Saves all settings (font, size, density, theme, panel state) to browser storage
+- **Data Mode**: Toggle to display individual binary bits (0s and 1s) instead of characters
+- **Collapsible Control Panel**: Remembers your preference; minimizes to button bar
+- **Intuitive Glyph Buttons**: Reset (↻), Save (💾), Refresh (⟲), and Toggle (−) controls
+- **User Preferences**: Saves all settings (font, size, density, theme, panel state, data mode) to browser storage
 - **Custom Defaults**: Save current settings as new defaults
-- **Performance Optimized**: 30fps animation, GPU-accelerated transforms, minimal CPU usage
 
 ## Project Structure
 
@@ -111,9 +114,9 @@ const FRAME_INTERVAL = 33; // milliseconds (lower = faster, higher = slower)
 
 ## Notes
 
-Originally created by Gemma 3:4b local instance. Evolved through multiple iterations with CSS positioning fixes, proper animation, font detection, theme system, user preference persistence, and UI polish.
+Originally created by Gemma 3:4b local instance. Evolved through multiple iterations with CSS positioning fixes, proper animation, font detection, theme system, user preference persistence, and intuitive UI design.
 
-Current version (v1.1) includes full theming support, localStorage persistence, and collapsible control panel.
+**Current version (v1.2)** features Data Mode for binary bit visualization, expanded control ranges (8-60px font, 25-500 density), redesigned glyph button interface, and enhanced user experience with collapsible panel state persistence.
 
 ## License
 
