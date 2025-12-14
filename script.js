@@ -5,6 +5,9 @@ let currentFontSize = 14;
 let currentDensity = 80;
 let currentColorTheme = 'green';
 let dataMode = false; // Toggle for hex/binary data display
+let matrixVisible = true; // Toggle for matrix display visibility
+let animationRunning = true; // Control animation loop
+let matrixVisible = true; // Toggle for matrix display visibility
 
 // Global character set and pixel storage
 const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -116,7 +119,8 @@ function getDefaultPreferences() {
     fontSize: 14,
     density: 80,
     colorTheme: 'green',
-    dataMode: false
+    dataMode: false,
+    matrixVisible: true
   };
 }
 
@@ -126,18 +130,20 @@ function savePreferences() {
     fontSize: currentFontSize,
     density: currentDensity,
     colorTheme: currentColorTheme,
-    dataMode: dataMode
+    dataMode: dataMode,
+    matrixVisible: matrixVisible
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
 }
 
 function saveAsDefault() {
-  const newDefaults = {
+  const customDefaults = {
     font: currentFont,
     fontSize: currentFontSize,
     density: currentDensity,
     colorTheme: currentColorTheme,
-    dataMode: dataMode
+    dataMode: dataMode,
+    matrixVisible: matrixVisible
   };
   localStorage.setItem(DEFAULTS_STORAGE_KEY, JSON.stringify(newDefaults));
 }
@@ -281,6 +287,26 @@ function populateFontSelector() {
     resetAllCharacters();
     savePreferences();
   });
+
+  // Add matrix display toggle
+  const matrixToggleBtn = document.getElementById('matrixToggleBtn');
+  const matrix = document.getElementById('matrix');
+  matrixToggleBtn.addEventListener('click', () => {
+    matrixVisible = !matrixVisible;
+    if (matrixVisible) {
+      matrix.style.display = 'block';
+      matrixToggleBtn.style.opacity = '1';
+    } else {
+      matrix.style.display = 'none';
+      matrixToggleBtn.style.opacity = '0.5';
+    }
+    savePreferences();
+  });
+  // Set initial button state
+  if (!matrixVisible) {
+    matrix.style.display = 'none';
+    matrixToggleBtn.style.opacity = '0.5';
+  }
 
   // Add reset button functionality
   const resetBtn = document.getElementById('resetBtn');
@@ -506,6 +532,7 @@ function initializeApp() {
   currentDensity = prefs.density;
   currentColorTheme = prefs.colorTheme;
   dataMode = prefs.dataMode || false;
+  matrixVisible = prefs.matrixVisible !== false;
 
   detectSystemFont();
   populateFontSelector();
