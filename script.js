@@ -6,6 +6,11 @@ let currentDensity = 80;
 let currentColorTheme = 'green';
 let dataMode = false; // Toggle for hex/binary data display
 
+// Global character set and pixel storage
+const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const pixels = [];
+let matrixDiv = null; // Will be initialized when DOM loads
+
 // Data encoding helpers for 4-bit (nibble) and 8-bit (byte) display
 function generateRandomByte() {
   return Math.floor(Math.random() * 256);
@@ -374,96 +379,103 @@ function addPixel() {
   pixels.push({ element: pixel, speed: speed, x: x, y: y });
 }
 
-// Initialize
-const prefs = loadPreferences();
-currentFont = prefs.font;
-currentFontSize = prefs.fontSize;
-currentDensity = prefs.density;
-currentColorTheme = prefs.colorTheme;
-dataMode = prefs.dataMode || false;
+// Wait for DOM to be ready before initializing
+function initializeApp() {
+  // Initialize
+  const prefs = loadPreferences();
+  currentFont = prefs.font;
+  currentFontSize = prefs.fontSize;
+  currentDensity = prefs.density;
+  currentColorTheme = prefs.colorTheme;
+  dataMode = prefs.dataMode || false;
 
-detectSystemFont();
-populateFontSelector();
-applyTheme(currentColorTheme); // Apply initial theme
+  detectSystemFont();
+  populateFontSelector();
+  applyTheme(currentColorTheme); // Apply initial theme
 
-const matrixDiv = document.getElementById('matrix');
-const numPixels = 80; // Initial density
-const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  matrixDiv = document.getElementById('matrix');
+  const numPixels = 80; // Initial density
 
-// Store pixel data with speeds
-const pixels = [];
-
-// Create the falling characters
-for (let i = 0; i < numPixels; i++) {
-  const pixel = document.createElement('div');
-  pixel.classList.add('pixel');
-  
-  const x = Math.random() * window.innerWidth;
-  const y = Math.random() * window.innerHeight;
-  const speed = 2 + Math.random() * 6;
-  const opacity = 0.3 + Math.random() * 0.7;
-  
-  pixel.style.opacity = opacity;
-  pixel.style.fontFamily = currentFont;
-  pixel.style.fontSize = currentFontSize + 'px';
-  const theme = colorThemes[currentColorTheme];
-  pixel.style.color = theme.color;
-  pixel.style.textShadow = `0 0 3px ${theme.glow}`;
-  pixel.style.transform = `translate(${x}px, ${y}px)`;
-  
-  // Set content based on mode
-  if (dataMode) {
-    pixel.textContent = generateRandomDataSequence(3);
-  } else {
-    pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
-  }
-  
-  matrixDiv.appendChild(pixel);
-  pixels.push({ element: pixel, speed: speed, x: x, y: y });
-}
-
-// Animation loop with frame throttling
-let lastUpdate = 0;
-function animate() {
-  const now = performance.now();
-  
-  // Only update every FRAME_INTERVAL milliseconds (~30fps)
-  if (now - lastUpdate >= FRAME_INTERVAL) {
-    lastUpdate = now;
+  // Create the falling characters
+  for (let i = 0; i < numPixels; i++) {
+    const pixel = document.createElement('div');
+    pixel.classList.add('pixel');
     
-    for (let i = 0; i < pixels.length; i++) {
-      const p = pixels[i];
-      p.y += p.speed;
+    const x = Math.random() * window.innerWidth;
+    const y = Math.random() * window.innerHeight;
+    const speed = 2 + Math.random() * 6;
+    const opacity = 0.3 + Math.random() * 0.7;
+    
+    pixel.style.opacity = opacity;
+    pixel.style.fontFamily = currentFont;
+    pixel.style.fontSize = currentFontSize + 'px';
+    const theme = colorThemes[currentColorTheme];
+    pixel.style.color = theme.color;
+    pixel.style.textShadow = `0 0 3px ${theme.glow}`;
+    pixel.style.transform = `translate(${x}px, ${y}px)`;
+    
+    // Set content based on mode
+    if (dataMode) {
+      pixel.textContent = generateRandomDataSequence(3);
+    } else {
+      pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
+    }
+    
+    matrixDiv.appendChild(pixel);
+    pixels.push({ element: pixel, speed: speed, x: x, y: y });
+  }
+
+  // Animation loop with frame throttling
+  let lastUpdate = 0;
+  function animate() {
+    const now = performance.now();
+    
+    // Only update every FRAME_INTERVAL milliseconds (~30fps)
+    if (now - lastUpdate >= FRAME_INTERVAL) {
+      lastUpdate = now;
       
-      // Reset to top when falling off screen
-      if (p.y > window.innerHeight) {
-        p.y = -20;
-        p.x = Math.random() * window.innerWidth;
-        if (dataMode) {
-          p.element.textContent = generateRandomDataSequence(3);
-        } else {
-          p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+      for (let i = 0; i < pixels.length; i++) {
+        const p = pixels[i];
+        p.y += p.speed;
+        
+        // Reset to top when falling off screen
+        if (p.y > window.innerHeight) {
+          p.y = -20;
+          p.x = Math.random() * window.innerWidth;
+          if (dataMode) {
+            p.element.textContent = generateRandomDataSequence(3);
+          } else {
+            p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+          }
+          // Update color to current theme when character resets
+          const theme = colorThemes[currentColorTheme];
+          p.element.style.color = theme.color;
+          p.element.style.textShadow = `0 0 3px ${theme.glow}`;
         }
-        // Update color to current theme when character resets
-        const theme = colorThemes[currentColorTheme];
-        p.element.style.color = theme.color;
-        p.element.style.textShadow = `0 0 3px ${theme.glow}`;
-      }
-      
-      // Use transform for GPU acceleration instead of top/left
-      p.element.style.transform = `translate(${p.x}px, ${p.y}px)`;
-      
-      // Randomly change character (reduced frequency)
-      if (Math.random() < 0.01) {
-        if (dataMode) {
-          p.element.textContent = generateRandomDataSequence(3);
-        } else {
-          p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+        
+        // Use transform for GPU acceleration instead of top/left
+        p.element.style.transform = `translate(${p.x}px, ${p.y}px)`;
+        
+        // Randomly change character (reduced frequency)
+        if (Math.random() < 0.01) {
+          if (dataMode) {
+            p.element.textContent = generateRandomDataSequence(3);
+          } else {
+            p.element.textContent = chars[Math.floor(Math.random() * chars.length)];
+          }
         }
       }
     }
+    requestAnimationFrame(animate);
   }
-  requestAnimationFrame(animate);
+
+  animate(); // Start the animation
 }
 
-animate(); // Start the animation
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  // DOM is already loaded
+  initializeApp();
+}
