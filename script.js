@@ -332,7 +332,7 @@ function populateFontSelector() {
       matrixToggleBtn.style.opacity = '1';
     } else {
       // Water faucet OFF: freeze animation, show cursor
-      // Cursor shows when the last characters finish draining.
+      cursor.classList.add('visible');
       matrixToggleBtn.style.opacity = '0.5';
     }
     savePreferences();
@@ -514,8 +514,8 @@ function initializeApp() {
     if (now - lastUpdate >= FRAME_INTERVAL) {
       lastUpdate = now;
 
-      // Cursor only appears when the matrix has fully drained.
-      setCursorVisible(!matrixVisible && particles.length === 0);
+      // Cursor appears whenever the faucet is OFF.
+      setCursorVisible(!matrixVisible);
 
       // If faucet ON, slowly refill to target density.
       if (matrixVisible && particles.length < currentDensity) {
@@ -534,15 +534,17 @@ function initializeApp() {
         return;
       }
 
-      // Trail effect
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+      // Trail effect (reset shadow first so the clear pass isn't "glowy")
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.20)';
       ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
       const theme = getTheme();
       ctx.font = getCanvasFont();
       ctx.fillStyle = theme.color;
       ctx.shadowColor = theme.glow;
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 4;
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
@@ -588,7 +590,7 @@ function initializeApp() {
   }
 
   // Ensure initial cursor state is consistent.
-  setCursorVisible(!matrixVisible && particles.length === 0);
+  setCursorVisible(!matrixVisible);
   animate();
 }
 
