@@ -77,6 +77,14 @@ function resetPreferences() {
   location.reload();
 }
 
+// CSS Variable management for theming
+function applyTheme(colorTheme) {
+  const theme = colorThemes[colorTheme];
+  const root = document.documentElement;
+  root.style.setProperty('--theme-color', theme.color);
+  root.style.setProperty('--theme-glow', theme.glow);
+}
+
 // Performance optimization: throttle animation frame updates
 let lastFrameTime = 0;
 const FRAME_INTERVAL = 33; // ~30fps instead of 60fps
@@ -241,53 +249,14 @@ function updatePixelColors() {
     pixel.style.textShadow = `0 0 3px ${theme.glow}`;
   });
   
-  // Update control panel color
-  updateControlPanelColor();
+  // Update CSS variables for control panel and all elements
+  applyTheme(currentColorTheme);
 }
 
 function updateControlPanelColor() {
-  const theme = colorThemes[currentColorTheme];
-  const controlPanel = document.getElementById('controlPanel');
-  
-  // Update main panel border and text color
-  controlPanel.style.borderColor = theme.color;
-  controlPanel.style.color = theme.color;
-  controlPanel.setAttribute('data-theme', currentColorTheme);
-  
-  // Update control header
-  const controlHeader = document.getElementById('controlHeader');
-  if (controlHeader) {
-    const headerSpans = controlHeader.querySelectorAll('span');
-    headerSpans.forEach(span => {
-      span.style.color = theme.color;
-    });
-  }
-  
-  // Update all label colors
-  const labels = controlPanel.querySelectorAll('label');
-  labels.forEach(label => {
-    label.style.color = theme.color;
-  });
-  
-  // Update all select and input elements
-  const selects = controlPanel.querySelectorAll('select, input[type="range"]');
-  selects.forEach(select => {
-    select.style.borderColor = theme.color;
-    select.style.color = theme.color;
-  });
-  
-  // Update value labels
-  const valueLabels = controlPanel.querySelectorAll('.value-label');
-  valueLabels.forEach(label => {
-    label.style.color = theme.color;
-  });
-  
-  // Update all buttons in control panel
-  const buttons = controlPanel.querySelectorAll('button');
-  buttons.forEach(button => {
-    button.style.borderColor = theme.color;
-    button.style.color = theme.color;
-  });
+  // CSS variables now handle all styling automatically
+  // This function is kept for compatibility but is now minimal
+  applyTheme(currentColorTheme);
 }
 
 function resetAllCharacters() {
@@ -351,6 +320,7 @@ currentColorTheme = prefs.colorTheme;
 
 detectSystemFont();
 populateFontSelector();
+applyTheme(currentColorTheme); // Apply initial theme
 
 const matrixDiv = document.getElementById('matrix');
 const numPixels = 80; // Initial density

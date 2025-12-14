@@ -3,6 +3,11 @@
 <head>
   <title>Matrix Effect</title>
   <style>
+    :root {
+      --theme-color: #0f0;
+      --theme-glow: #0f0;
+    }
+
     body {
       margin: 0;
       overflow: hidden; /* Prevent scrollbars */
@@ -56,8 +61,8 @@
       position: absolute;
       font-family: monospace;
       font-size: 14px;
-      color: #0f0;
-      text-shadow: 0 0 3px #0f0;
+      color: var(--theme-color);
+      text-shadow: 0 0 3px var(--theme-glow);
       white-space: nowrap;
       line-height: 1;
       will-change: transform;
@@ -68,13 +73,13 @@
       bottom: 20px;
       right: 20px;
       background-color: rgba(0, 0, 0, 0.9);
-      border: 2px solid #0f0;
+      border: 2px solid var(--theme-color);
       border-radius: 5px;
       padding: 15px;
       z-index: 1000;
       font-family: monospace;
       font-size: 11px;
-      color: #0f0;
+      color: var(--theme-color);
       max-width: 280px;
       transition: border-color 0.3s, color 0.3s;
     }
@@ -84,7 +89,7 @@
       user-select: none;
       font-weight: bold;
       padding-bottom: 8px;
-      border-bottom: 1px solid #0f0;
+      border-bottom: 1px solid var(--theme-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -114,17 +119,32 @@
     .control-row label {
       flex-shrink: 0;
       transition: color 0.3s;
+      color: var(--theme-color);
     }
 
     .control-row input[type="range"],
     .control-row select {
       transition: border-color 0.3s, color 0.3s;
+      background-color: #000;
+      color: var(--theme-color);
+      border: 1px solid var(--theme-color);
+      padding: 3px 5px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    .control-row select:hover,
+    .control-row input[type="range"]:hover {
+      text-shadow: 0 0 10px var(--theme-glow);
     }
 
     .value-label {
       min-width: 35px;
       text-align: right;
       transition: color 0.3s;
+      color: var(--theme-color);
     }
 
     #resetBtn,
@@ -132,9 +152,9 @@
     #refreshBtn {
       padding: 6px 12px;
       background-color: transparent;
-      border: 1px solid #0f0;
+      border: 1px solid var(--theme-color);
       border-radius: 3px;
-      color: #0f0;
+      color: var(--theme-color);
       font-family: monospace;
       font-size: 10px;
       cursor: pointer;
@@ -147,7 +167,7 @@
     #saveDefaultBtn:hover,
     #refreshBtn:hover {
       background-color: rgba(0, 255, 0, 0.1);
-      text-shadow: 0 0 10px #0f0;
+      text-shadow: 0 0 10px var(--theme-glow);
     }
 
     #resetBtn:active,
