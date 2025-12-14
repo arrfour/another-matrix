@@ -289,13 +289,17 @@ function populateFontSelector() {
   // Add matrix display toggle
   const matrixToggleBtn = document.getElementById('matrixToggleBtn');
   const matrix = document.getElementById('matrix');
+  const cursor = document.getElementById('cursor');
+  
   matrixToggleBtn.addEventListener('click', () => {
     matrixVisible = !matrixVisible;
     if (matrixVisible) {
       matrix.style.display = 'block';
+      cursor.classList.remove('visible');
       matrixToggleBtn.style.opacity = '1';
     } else {
       matrix.style.display = 'none';
+      cursor.classList.add('visible');
       matrixToggleBtn.style.opacity = '0.5';
     }
     savePreferences();
@@ -303,6 +307,7 @@ function populateFontSelector() {
   // Set initial button state
   if (!matrixVisible) {
     matrix.style.display = 'none';
+    cursor.classList.add('visible');
     matrixToggleBtn.style.opacity = '0.5';
   }
 
