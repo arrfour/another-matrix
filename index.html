@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Matrix Effect</title>
   <style>
     :root {
@@ -202,8 +203,8 @@
       border: 1px solid var(--theme-color);
       border-radius: 3px;
       color: var(--theme-color);
-      font-family: monospace;
-      font-size: 12px;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
       cursor: pointer;
       transition: all 0.3s;
       display: flex;
@@ -441,16 +442,31 @@
       position: fixed;
       top: 20px;
       left: 20px;
-      font-family: monospace;
-      font-size: 18px;
+      font-family: system-ui, -apple-system, monospace;
+      font-size: 16px;
+      line-height: 1.4;
       color: var(--theme-color);
       text-shadow: 0 0 10px var(--theme-glow);
-      display: none;
       z-index: 500;
+      white-space: pre-wrap;
+      max-width: 600px;
+      visibility: hidden;
     }
 
     #cursor.visible {
+      visibility: visible;
+    }
+
+    #cursorText {
+      display: inline;
+    }
+
+    #cursorBlock {
       display: inline-block;
+      animation: none;
+    }
+
+    #cursorBlock.blinking {
       animation: blink 1s infinite;
     }
 
@@ -466,7 +482,7 @@
 </head>
 <body>
   <div id="matrix"></div>
-  <div id="cursor">█</div>
+  <div id="cursor"><span id="cursorText"></span><span id="cursorBlock">|</span></div>
 
   <div id="controlPanel">
     <div id="controlContent">
@@ -505,20 +521,20 @@
     </div>
 
     <div class="button-group">
-      <button id="resetBtn" class="glyph-btn" title="Reset to defaults">↻</button>
-      <button id="saveDefaultBtn" class="glyph-btn" title="Save as default">💾</button>
-      <button id="refreshBtn" class="glyph-btn" title="Refresh">⟲</button>
-      <button id="readmeBtn" class="glyph-btn" title="View README">ℹ</button>
-      <button id="quoteBtn" class="glyph-btn" title="View Quote">«</button>
-      <button id="matrixToggleBtn" class="glyph-btn" title="Toggle matrix display">▮</button>
-      <button id="toggleBtn" class="glyph-btn" title="Toggle panel">−</button>
+      <button id="resetBtn" class="glyph-btn" title="Reset to defaults">&#x21BB;</button>
+      <button id="saveDefaultBtn" class="glyph-btn" title="Save as default">&#x1F4BE;</button>
+      <button id="refreshBtn" class="glyph-btn" title="Refresh">&#x27F2;</button>
+      <button id="readmeBtn" class="glyph-btn" title="View README">&#x2139;</button>
+      <button id="quoteBtn" class="glyph-btn" title="View Quote">&#xAB;</button>
+      <button id="matrixToggleBtn" class="glyph-btn" title="Toggle matrix display">&#x25AE;</button>
+      <button id="toggleBtn" class="glyph-btn" title="Toggle panel">&#x2212;</button>
     </div>
   </div>
 
   <div id="readmeModal">
     <div id="readmeModalHeader">
       <h2 id="readmeModalTitle">README</h2>
-      <button id="readmeCloseBtn" title="Close">✕</button>
+      <button id="readmeCloseBtn" title="Close">&times;</button>
     </div>
     <div id="readmeContent"></div>
   </div>
@@ -526,7 +542,7 @@
   <div id="quoteModal">
     <div id="quoteModalHeader">
       <h2 id="quoteModalTitle">Inspiration</h2>
-      <button id="quoteCloseBtn" title="Close">✕</button>
+      <button id="quoteCloseBtn" title="Close">&times;</button>
     </div>
     <div id="quoteContent"></div>
   </div>
@@ -534,64 +550,6 @@
   <script type="text/plain" id="quoteText">"And I urge you to please notice when you are happy, and exclaim or murmur or think at some point, 'If this isn't nice, I don't know what is.'"</script>
 
   <script type="text/plain" id="quoteAttribution">— Kurt Vonnegut</script>
-
-  <script type="text/markdown" id="readmeText"># Matrix Rain Effect
-
-A browser-based visual effect inspired by the iconic "digital rain" from The Matrix. Features cascading characters with fully customizable fonts, sizes, density, and color themes.
-
-## Features
-
-- **Cascading Characters**: Animated katakana, numbers, and letters falling vertically with variable opacity for depth
-- **Font Detection**: Automatically selects the best available monospace font on your system
-- **Font Switching**: Change between Monaco, Menlo, Courier New, Inconsolata, Courier, or monospace
-- **Dynamic Size Control**: Real-time adjustment from 8px to 60px
-- **Density Control**: Adjust character count from 25 to 500 in real-time
-- **5 Color Themes**: Green, Cyan, Purple, Blue, White with automatic glow effects
-- **Data Mode**: Toggle to display individual binary bits (0s and 1s) instead of characters
-- **Matrix Display Toggle**: Show/hide the animation with a single click (▮ button)
-- **Blinking Cursor**: Terminal-like cursor appears when matrix is hidden
-- **Collapsible Control Panel**: Remembers your preference; minimizes to button bar
-- **Intuitive Glyph Buttons**: Reset (↻), Save (💾), Refresh (⟲), Inspiration («), Info (ℹ), Matrix Toggle (▮), and Panel Toggle (−)
-- **Quote Viewer**: Separate modal displaying the Kurt Vonnegut inspiration quote
-- **README Modal Viewer**: Click the info button (ℹ) to view documentation; toggle to hide
-- **User Preferences**: Saves all settings (font, size, density, theme, panel state, data mode, matrix visibility) to browser storage
-- **Custom Defaults**: Save current settings as new defaults
-
-## How to Use
-
-1. Open `index.html` in any modern web browser
-2. Watch the characters cascade down the screen
-3. Use the control panel to customize:
-   - **Font**: Select from available monospace fonts
-   - **Size**: Slider to scale characters (8-60px)
-   - **Density**: Adjust number of falling characters (25-500)
-   - **Color Theme**: Choose from 5 color schemes (Green, Cyan, Purple, Blue, White)
-   - **Data Mode**: Toggle to display binary bits (0s and 1s) instead of characters
-4. **Control Panel Buttons** (left to right):
-   - **↻ Reset**: Revert all settings to hardcoded defaults
-   - **💾 Save**: Save your current settings as new defaults
-   - **⟲ Refresh**: Reload the page while preserving your settings
-   - **« Inspiration**: Toggle the Kurt Vonnegut quote modal on/off
-   - **ℹ Info**: Toggle README documentation modal on/off
-   - **▮ Matrix**: Toggle matrix animation display on/off (shows blinking cursor when hidden)
-   - **− Panel**: Collapse/expand the control panel (state is remembered)
-
-## Technical Details
-
-- **HTML5/CSS3/Vanilla JavaScript** - No external dependencies
-- **CSS Custom Properties** for dynamic theming
-- **localStorage** for persistent preferences
-- **30fps Animation** with selective DOM updates (~35-40% CPU reduction)
-- **Canvas API** for font detection
-- **GPU-accelerated transforms** for smooth motion
-
-## Browser Compatibility
-
-Works on all modern browsers supporting ES6+, Canvas API, CSS Custom Properties, and localStorage.
-
-## License
-
-Free to use and modify for personal or commercial projects.  </script>
 
   <script src="script.js"></script>
 </body>

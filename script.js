@@ -12,6 +12,52 @@ const chars = 'アイウエオカキクケコサシスセソタチツテトナ�
 const pixels = [];
 let matrixDiv = null; // Will be initialized when DOM loads
 
+// Messages for cursor mode typing effect
+const cursorMessages = [
+  "Wake up, Neo...",
+  "The Matrix has you...",
+  "Follow the white rabbit.",
+  "Knock, knock, Neo.",
+  "Free your mind.",
+  "There is no spoon.",
+  "Welcome to the real world.",
+  "I know kung fu.",
+  "Show me.",
+  "What is the Matrix?",
+  "Choice. The problem is choice.",
+  "You take the red pill...",
+  "You stay in Wonderland...",
+  "How deep the rabbit hole goes.",
+  "I can only show you the door.",
+  "Unfortunately, no one can be told what the Matrix is.",
+  "All I'm offering is the truth.",
+  "Whoa.",
+  "Guns. Lots of guns.",
+  "Dodge this."
+];
+
+let typingTimeout = null;
+let currentTypingIndex = 0;
+
+// Cyberpunk data generators
+function generateCyberpunkData() {
+  const types = [
+    () => `[${generateIPAddress()}]`,
+    () => `0x${Array.from({length: 8}, () => Math.floor(Math.random() * 16).toString(16)).join('').toUpperCase()}`,
+    () => `${new Date().toISOString().replace('T', ' ').substring(0, 19)} UTC`,
+    () => `CONN:${Math.floor(Math.random() * 65535)}`,
+    () => `PID:${Math.floor(Math.random() * 99999)}`,
+    () => `MEM:${Math.floor(Math.random() * 8192)}MB`,
+    () => `[${Array.from({length: 16}, () => byteToHex(generateRandomByte())).join(' ')}]`,
+    () => `USER:${['ANON', 'ROOT', 'NEO', 'TRINITY', 'MORPHEUS'][Math.floor(Math.random() * 5)]}`
+  ];
+  return types[Math.floor(Math.random() * types.length)]();
+}
+
+function generateIPAddress() {
+  return `${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`;
+}
+
 // Data encoding helpers for 4-bit (nibble) and 8-bit (byte) display
 function generateRandomByte() {
   return Math.floor(Math.random() * 256);
@@ -22,8 +68,12 @@ function byteToHex(byte) {
 }
 
 function generateRandomDataSequence(length = 3) {
-  // In data mode, return a single random bit (0 or 1)
-  return Math.random() < 0.5 ? '0' : '1';
+  // In data mode, return a sequence of random bits
+  let sequence = '';
+  for (let i = 0; i < length; i++) {
+    sequence += Math.random() < 0.5 ? '0' : '1';
+  }
+  return sequence;
 }
 
 // Color themes
@@ -286,6 +336,73 @@ function populateFontSelector() {
     savePreferences();
   });
 
+  // Typing effect for cursor mode
+  function typeMessage(message, callback) {
+    const cursorText = document.getElementById('cursorText');
+    const cursorBlock = document.getElementById('cursorBlock');
+    cursorBlock.classList.remove('blinking'); // Stop blinking while typing
+    
+    let index = 0;
+    cursorText.textContent = '';
+    
+    // Randomly decide if we'll add cyberpunk data (40% chance)
+    const addData = Math.random() < 0.4;
+    
+    function typeChar() {
+      if (index < message.length) {
+        cursorText.textContent += message[index];
+        index++;
+        typingTimeout = setTimeout(typeChar, 80 + Math.random() * 40); // Variable typing speed
+      } else {
+        // Message complete, optionally add cyberpunk data
+        if (addData) {
+          typingTimeout = setTimeout(() => {
+            cursorText.textContent += '\n' + generateCyberpunkData();
+            // Wait longer then show cursor block and resume blinking
+            typingTimeout = setTimeout(() => {
+              cursorText.textContent = '';
+              cursorBlock.classList.add('blinking');
+              if (callback) callback();
+            }, 8000); // Display full message + data for 8 seconds
+          }, 500); // Brief pause before data appears
+        } else {
+          // No data, just wait and show cursor block and resume blinking
+          typingTimeout = setTimeout(() => {
+            cursorText.textContent = '';
+            cursorBlock.classList.add('blinking');
+            if (callback) callback();
+          }, 6000); // Display message for 6 seconds before resetting
+        }
+      }
+    }
+    
+    typeChar();
+  }
+
+  function scheduleNextMessage() {
+    if (!matrixVisible) {
+      // Random delay between 8-15 seconds
+      const delay = 8000 + Math.random() * 7000;
+      typingTimeout = setTimeout(() => {
+        if (!matrixVisible) { // Check again in case matrix was re-enabled
+          const message = cursorMessages[Math.floor(Math.random() * cursorMessages.length)];
+          typeMessage(message, scheduleNextMessage);
+        }
+      }, delay);
+    }
+  }
+
+  function stopTyping() {
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      typingTimeout = null;
+    }
+    const cursorText = document.getElementById('cursorText');
+    const cursorBlock = document.getElementById('cursorBlock');
+    cursorText.textContent = '';
+    cursorBlock.classList.remove('blinking');
+  }
+
   // Add matrix display toggle
   const matrixToggleBtn = document.getElementById('matrixToggleBtn');
   const matrix = document.getElementById('matrix');
@@ -295,20 +412,26 @@ function populateFontSelector() {
     matrixVisible = !matrixVisible;
     if (matrixVisible) {
       // Water faucet ON: resume animation, hide cursor
-      // Don't need to regenerate - animation will naturally refill as recycling resumes
+      stopTyping();
       cursor.classList.remove('visible');
       matrixToggleBtn.style.opacity = '1';
     } else {
-      // Water faucet OFF: freeze animation, show cursor
+      // Water faucet OFF: freeze animation, show cursor, start typing messages
+      const cursorBlock = document.getElementById('cursorBlock');
       cursor.classList.add('visible');
+      cursorBlock.classList.add('blinking');
       matrixToggleBtn.style.opacity = '0.5';
+      scheduleNextMessage();
     }
     savePreferences();
   });
-  // Set initial button state
+  // Set initial button state and start typing if cursor visible
   if (!matrixVisible) {
+    const cursorBlock = document.getElementById('cursorBlock');
     cursor.classList.add('visible');
+    cursorBlock.classList.add('blinking');
     matrixToggleBtn.style.opacity = '0.5';
+    scheduleNextMessage();
   }
 
   // Add reset button functionality
@@ -378,23 +501,25 @@ function populateFontSelector() {
   const readmeCloseBtn = document.getElementById('readmeCloseBtn');
   const readmeContent = document.getElementById('readmeContent');
 
-  readmeBtn.addEventListener('click', () => {
+  readmeBtn.addEventListener('click', async () => {
     // Toggle the modal visibility
     if (readmeModal.classList.contains('visible')) {
       // Close if already open
       readmeModal.classList.remove('visible');
     } else {
-      // Open if closed
+      // Open if closed - fetch README.md from server
       try {
-        const readmeElement = document.getElementById('readmeText');
-        if (!readmeElement) throw new Error('README content not found');
-        const markdown = readmeElement.textContent;
-        readmeContent.innerHTML = markdownToHtml(markdown);
+        readmeContent.innerHTML = '<p>Loading...</p>';
         readmeModal.classList.add('visible');
+        
+        const response = await fetch('README.md');
+        if (!response.ok) throw new Error('Failed to fetch README.md');
+        
+        const markdown = await response.text();
+        readmeContent.innerHTML = markdownToHtml(markdown);
       } catch (error) {
         console.error('Error loading README:', error);
         readmeContent.innerHTML = '<p style="color: #f00;">Failed to load README: ' + error.message + '</p>';
-        readmeModal.classList.add('visible');
       }
     }
   });
