@@ -39,19 +39,42 @@ const cursorMessages = [
 let typingTimeout = null;
 let currentTypingIndex = 0;
 
-// Cyberpunk data generators
+// Enhanced Cyberpunk data generators
 function generateCyberpunkData() {
   const types = [
     () => `[${generateIPAddress()}]`,
-    () => `0x${Array.from({length: 8}, () => Math.floor(Math.random() * 16).toString(16)).join('').toUpperCase()}`,
+    () => `0x${Array.from({length: 16}, () => Math.floor(Math.random() * 16).toString(16)).join('').toUpperCase()}`,
     () => `${new Date().toISOString().replace('T', ' ').substring(0, 19)} UTC`,
     () => `CONN:${Math.floor(Math.random() * 65535)}`,
     () => `PID:${Math.floor(Math.random() * 99999)}`,
-    () => `MEM:${Math.floor(Math.random() * 8192)}MB`,
-    () => `[${Array.from({length: 16}, () => byteToHex(generateRandomByte())).join(' ')}]`,
-    () => `USER:${['ANON', 'ROOT', 'NEO', 'TRINITY', 'MORPHEUS'][Math.floor(Math.random() * 5)]}`
+    () => `MEM:${Math.floor(Math.random() * 8192)}MB CPU:${Math.floor(Math.random() * 100)}%`,
+    () => `[${Array.from({length: 32}, () => byteToHex(generateRandomByte())).join(' ')}]`,
+    () => `USER:${['ANON', 'ROOT', 'NEO', 'TRINITY', 'MORPHEUS', 'AGENT_SMITH'][Math.floor(Math.random() * 6)]}`,
+    () => `FIREWALL:COMPROMISED 🔥`,
+    () => `SOCKET:OPEN [${generateIPAddress()}]:${Math.floor(Math.random() * 65535)}`,
+    () => `PKT:${Math.floor(Math.random() * 99999999)} DROP:${Math.floor(Math.random() * 1000)} 📡`,
+    () => `DAEMON:${['sshd', 'httpd', 'icmp', 'dns', 'tor'][Math.floor(Math.random() * 5)]} [RUNNING] ✓`,
+    () => `FILE://${['etc/shadow', 'root/.ssh', 'var/log/auth', 'opt/matrix'][Math.floor(Math.random() * 4)]} 🔓`,
+    () => `SCAN:${['NMAP', 'MASSCAN', 'ZMAP'][Math.floor(Math.random() * 3)]} TARGET_RANGE:${generateIPAddress()}/16 🎯`,
+    () => `EXPLOIT:${['buffer_overflow', 'sql_inject', 'xss_payload', 'privesc'][Math.floor(Math.random() * 4)]} [ACTIVE] ⚡`,
+    () => `CRYPTO:SHA256(${Array.from({length: 4}, () => byteToHex(generateRandomByte())).join('')})`,
+    () => `BANDWIDTH:${Math.floor(Math.random() * 999)}Mbps LATENCY:${Math.floor(Math.random() * 50)}ms 💨`,
+    () => `[${Array.from({length: 8}, () => (Math.random() * 255 | 0).toString(16).padStart(2, '0')).join(':')}]`,
+    () => generateProgressBar(),
+    () => `TRANSFER:${Math.floor(Math.random() * 100)}% 📥`,
+    () => `DECRYPTING 🔐`,
+    () => `ACCESS_GRANTED 🌐`,
+    () => `LOCKDOWN_ACTIVATED 🛡️`
   ];
   return types[Math.floor(Math.random() * types.length)]();
+}
+
+function generateProgressBar() {
+  const width = 30;
+  const filled = Math.floor(Math.random() * (width - 5) + 5);
+  const bar = '[' + '='.repeat(filled) + ' '.repeat(width - filled) + ']';
+  const percent = Math.floor((filled / width) * 100);
+  return `${bar} ${percent}%`;
 }
 
 function generateIPAddress() {
@@ -342,11 +365,24 @@ function populateFontSelector() {
     const cursorBlock = document.getElementById('cursorBlock');
     cursorBlock.classList.remove('blinking'); // Stop blinking while typing
     
+    // Apply current font settings to cursor text
+    cursorText.style.fontFamily = currentFont + ', monospace';
+    cursorText.style.fontSize = currentFontSize + 'px';
+    const theme = colorThemes[currentColorTheme];
+    cursorText.style.color = theme.color;
+    cursorText.style.textShadow = `0 0 3px ${theme.glow}`;
+    
+    // Apply same styles to cursor block
+    cursorBlock.style.fontFamily = currentFont + ', monospace';
+    cursorBlock.style.fontSize = currentFontSize + 'px';
+    cursorBlock.style.color = theme.color;
+    cursorBlock.style.textShadow = `0 0 3px ${theme.glow}`;
+    
     let index = 0;
     cursorText.textContent = '';
     
-    // Randomly decide if we'll add cyberpunk data (40% chance)
-    const addData = Math.random() < 0.4;
+    // Always add heavy cyberpunk data - 80% chance for extensive hacker activity
+    const intensity = Math.random() < 0.8 ? 'heavy' : 'light';
     
     function typeChar() {
       if (index < message.length) {
@@ -354,25 +390,40 @@ function populateFontSelector() {
         index++;
         typingTimeout = setTimeout(typeChar, 80 + Math.random() * 40); // Variable typing speed
       } else {
-        // Message complete, optionally add cyberpunk data
-        if (addData) {
-          typingTimeout = setTimeout(() => {
-            cursorText.textContent += '\n' + generateCyberpunkData();
-            // Wait longer then show cursor block and resume blinking
-            typingTimeout = setTimeout(() => {
-              cursorText.textContent = '';
-              cursorBlock.classList.add('blinking');
-              if (callback) callback();
-            }, 8000); // Display full message + data for 8 seconds
-          }, 500); // Brief pause before data appears
-        } else {
-          // No data, just wait and show cursor block and resume blinking
-          typingTimeout = setTimeout(() => {
-            cursorText.textContent = '';
-            cursorBlock.classList.add('blinking');
-            if (callback) callback();
-          }, 6000); // Display message for 6 seconds before resetting
-        }
+        // Message complete, add cyberpunk data dynamically
+        typingTimeout = setTimeout(() => {
+          cursorText.textContent += '\n';
+          
+          // Function to display data line by line with delays
+          function addDataLine(lineIndex, totalLines, isFinal = false) {
+            if (lineIndex < totalLines) {
+              typingTimeout = setTimeout(() => {
+                cursorText.textContent += generateCyberpunkData() + '\n';
+                addDataLine(lineIndex + 1, totalLines, isFinal);
+              }, 300 + Math.random() * 200); // Random delay between lines for dynamic effect
+            } else if (isFinal) {
+              // All data complete, wait then reset
+              typingTimeout = setTimeout(() => {
+                cursorText.textContent = '';
+                cursorBlock.classList.add('blinking');
+                if (callback) callback();
+              }, 2000); // Show final data for 2 seconds before resetting
+            } else {
+              // More data coming
+              typingTimeout = setTimeout(() => {
+                addDataLine(0, 3, true); // Add 3 final lines
+              }, 1500); // Wait 1.5 seconds before final burst
+            }
+          }
+          
+          if (intensity === 'heavy') {
+            // Heavy hacker activity - display 6 lines with delays, then 3 more
+            addDataLine(0, 6, false);
+          } else {
+            // Light hacker activity - just 3 lines
+            addDataLine(0, 3, true);
+          }
+        }, 500); // Brief pause before data appears
       }
     }
     
@@ -583,6 +634,18 @@ function updatePixelFonts() {
     pixel.style.fontSize = currentFontSize + 'px';
   });
   
+  // Update cursor fonts
+  const cursorText = document.getElementById('cursorText');
+  const cursorBlock = document.getElementById('cursorBlock');
+  if (cursorText) {
+    cursorText.style.fontFamily = currentFont + ', monospace';
+    cursorText.style.fontSize = currentFontSize + 'px';
+  }
+  if (cursorBlock) {
+    cursorBlock.style.fontFamily = currentFont + ', monospace';
+    cursorBlock.style.fontSize = currentFontSize + 'px';
+  }
+  
   // Update control panel font
   const controlPanel = document.getElementById('controlPanel');
   controlPanel.style.fontFamily = currentFont + ', monospace';
@@ -601,6 +664,18 @@ function updatePixelColors() {
     pixel.style.color = theme.color;
     pixel.style.textShadow = `0 0 3px ${theme.glow}`;
   });
+  
+  // Also update cursor colors
+  const cursorText = document.getElementById('cursorText');
+  const cursorBlock = document.getElementById('cursorBlock');
+  if (cursorText) {
+    cursorText.style.color = theme.color;
+    cursorText.style.textShadow = `0 0 3px ${theme.glow}`;
+  }
+  if (cursorBlock) {
+    cursorBlock.style.color = theme.color;
+    cursorBlock.style.textShadow = `0 0 3px ${theme.glow}`;
+  }
   
   // Update CSS variables for control panel and all elements
   applyTheme(currentColorTheme);
