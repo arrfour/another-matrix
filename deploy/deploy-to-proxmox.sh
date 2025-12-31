@@ -23,12 +23,16 @@ read -p "$(echo -e ${YELLOW}'Proxmox Host IP/Hostname:' ${NC})" PROXMOX_HOST
 read -p "$(echo -e ${YELLOW}'Proxmox Username (format: user@pam or user@pve):' ${NC})" PROXMOX_USER
 read -sp "$(echo -e ${YELLOW}'Proxmox Password:' ${NC})" PROXMOX_PASS
 echo ""
-read -p "$(echo -e ${YELLOW}'LXC Container ID (e.g., 100):' ${NC})" CONTAINER_ID
+
 read -p "$(echo -e ${YELLOW}'LXC Container Name (e.g., matrix-effect):' ${NC})" CONTAINER_NAME
 read -p "$(echo -e ${YELLOW}'LXC Hostname (default: matrix-effect):' ${NC})" CONTAINER_HOSTNAME
 CONTAINER_HOSTNAME=${CONTAINER_HOSTNAME:-matrix-effect}
-read -p "$(echo -e ${YELLOW}'Template (ubuntu-22.04, debian-12, etc. - default: ubuntu-22.04):' ${NC})" TEMPLATE
-TEMPLATE=${TEMPLATE:-ubuntu-22.04}
+echo ""
+echo -e "${BLUE}Note: Template must be in format: storage:vztmpl/template-name${NC}"
+echo -e "${BLUE}Example: local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst${NC}"
+echo -e "${BLUE}Or just enter short name (ubuntu-22.04) and script will try to find it${NC}"
+read -p "$(echo -e ${YELLOW}'Template name:' ${NC})" TEMPLATE_INPUT
+TEMPLATE_INPUT=${TEMPLATE_INPUT:-ubuntu-22.04}
 read -p "$(echo -e ${YELLOW}'Storage for LXC (default: local):' ${NC})" STORAGE
 STORAGE=${STORAGE:-local}
 read -p "$(echo -e ${YELLOW}'Disk Size in GB (default: 5):' ${NC})" DISK_SIZE
@@ -71,68 +75,132 @@ echo -e "${BLUE}[1/7] Authenticating with Proxmox...${NC}"
 # Get Proxmox API token
 AUTH_RESPONSE=$(curl -s -k -X POST "https://${PROXMOX_HOST}:8006/api2/json/access/ticket" \
     -d "username=${PROXMOX_USER}&password=${PROXMOX_PASS}" \
-    -H "Content-Type: application/x-www-form-urlencoded" 2>/dev/null)
+    -H "Content-Type: application/x-www-form-urlencoded" 2>&1)
 
-TICKET=$(echo $AUTH_RESPONSE | grep -o '"ticket":"[^"]*' | cut -d'"' -f4)
-CSRF=$(echo $AUTH_RESPONSE | grep -o '"CSRFPreventionToken":"[^"]*' | cut -d'"' -f4)
+# Debug: Show raw response if verbose mode
+# echo "DEBUG: Auth response: $AUTH_RESPONSE"
+
+TICKET=$(echo "$AUTH_RESPONSE" | grep -o '"ticket":"[^"]*' | cut -d'"' -f4)
+CSRF=$(echo "$AUTH_RESPONSE" | grep -o '"CSRFPreventionToken":"[^"]*' | cut -d'"' -f4)
 
 if [ -z "$TICKET" ]; then
     echo -e "${RED}ERROR: Failed to authenticate with Proxmox${NC}"
-    echo "Response: $AUTH_RESPONSE"
+    echo "Check:"
+    echo "  1. Proxmox host IP/hostname is correct: ${PROXMOX_HOST}"
+    echo "  2. Username format is correct (e.g., root@pam)"
+    echo "  3. Password is correct"
+    echo "  4. Proxmox web interface is accessible at https://${PROXMOX_HOST}:8006"
+    echo ""
+    echo "Response from server:"
+    echo "$AUTH_RESPONSE" | head -5
     exit 1
 fi
 
 echo -e "${GREEN}✓ Authenticated${NC}"
 
+# Automatically find next available LXC Container ID
+echo -e "${BLUE}Detecting next available LXC Container ID...${NC}"
+LXC_LIST=$(curl -s -k -X GET "https://${PROXMOX_HOST}:8006/api2/json/cluster/resources?type=vm" \
+    -b "PVEAuthCookie=${TICKET}" \
+    -H "CSRFPreventionToken: ${CSRF}" 2>/dev/null)
+USED_IDS=$(echo "$LXC_LIST" | grep -oP '"vmid":\K\d+')
+NEXT_ID=100
+while echo "$USED_IDS" | grep -q "^$NEXT_ID$"; do
+    NEXT_ID=$((NEXT_ID+1))
+done
+CONTAINER_ID=$NEXT_ID
+echo -e "${GREEN}Using Container ID: $CONTAINER_ID${NC}"
+
 # Get node list
 echo -e "${BLUE}[2/7] Finding Proxmox nodes...${NC}"
 NODES=$(curl -s -k -X GET "https://${PROXMOX_HOST}:8006/api2/json/nodes" \
-    -H "Authorization: PVEAPIToken=${PROXMOX_USER}!$(echo $PROXMOX_PASS | md5sum | cut -d' ' -f1):$(echo $PROXMOX_PASS | sha256sum | cut -d' ' -f1)" \
-    -H "CSRFPreventionToken: $CSRF" 2>/dev/null)
+    -b "PVEAuthCookie=${TICKET}" \
+    -H "CSRFPreventionToken: ${CSRF}" 2>&1)
 
-NODE=$(echo $NODES | grep -o '"node":"[^"]*' | head -1 | cut -d'"' -f4)
+# Debug: Show response
+# echo "DEBUG: Nodes response: $NODES"
+
+# Try multiple parsing methods
+NODE=$(echo "$NODES" | grep -oP '"node"\s*:\s*"\K[^"]+' | head -1)
+
+# Fallback parsing
+if [ -z "$NODE" ]; then
+    NODE=$(echo "$NODES" | grep -o '"node":"[^"]*' | head -1 | cut -d'"' -f4)
+fi
 
 if [ -z "$NODE" ]; then
-    # Fallback: try to get first node name from common patterns
-    NODE="pve"
-    echo -e "${YELLOW}⚠ Could not detect node automatically, using: $NODE${NC}"
+    echo -e "${YELLOW}⚠ Could not detect node from API${NC}"
+    echo ""
+    read -p "$(echo -e ${YELLOW}'Enter Proxmox node name (usually pve): '${NC})" NODE
+    NODE=${NODE:-pve}
+    echo -e "${BLUE}Using node: $NODE${NC}"
 else
     echo -e "${GREEN}✓ Found node: $NODE${NC}"
 fi
 
 echo -e "${BLUE}[3/7] Creating LXC container...${NC}"
 
-# Build LXC creation JSON
-if [[ "$USE_DHCP" =~ ^[Yy]$ ]]; then
-    NET_CONFIG="net0=name=eth0,bridge=vmbr0,type=veth"
+# Determine template format
+if [[ "$TEMPLATE_INPUT" == *":"* ]]; then
+    # Already in full format (e.g., local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst)
+    OSTEMPLATE="$TEMPLATE_INPUT"
 else
-    NET_CONFIG="net0=name=eth0,bridge=vmbr0,type=veth,ip=${STATIC_IP},gw=${GATEWAY}"
+    # Try to find matching template
+    echo "Looking for template matching: $TEMPLATE_INPUT"
+    TEMPLATES_RESPONSE=$(curl -s -k -X GET "https://${PROXMOX_HOST}:8006/api2/json/nodes/${NODE}/storage/${STORAGE}/content?content=vztmpl" \
+        -b "PVEAuthCookie=${TICKET}" \
+        -H "CSRFPreventionToken: ${CSRF}" 2>&1)
+    
+    # Try to find matching template
+    OSTEMPLATE=$(echo "$TEMPLATES_RESPONSE" | grep -oP "\"volid\"\\s*:\\s*\"\\K[^\"]*${TEMPLATE_INPUT}[^\"]*" | head -1)
+    
+    if [ -z "$OSTEMPLATE" ]; then
+        echo -e "${YELLOW}⚠ Could not find template automatically${NC}"
+        echo "Available templates on ${STORAGE}:"
+        echo "$TEMPLATES_RESPONSE" | grep -oP '"volid"\s*:\s*"\K[^"]*vztmpl[^"]*' | sed 's/^/  /'
+        echo ""
+        read -p "$(echo -e ${YELLOW}'Enter full template path (e.g., local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst): '${NC})" OSTEMPLATE
+    else
+        echo -e "${GREEN}✓ Found template: $OSTEMPLATE${NC}"
+    fi
+fi
+
+# Build LXC creation parameters
+if [[ "$USE_DHCP" =~ ^[Yy]$ ]]; then
+    NET_CONFIG="name=eth0,bridge=vmbr0,firewall=1,ip=dhcp"
+else
+    NET_CONFIG="name=eth0,bridge=vmbr0,firewall=1,ip=${STATIC_IP},gw=${GATEWAY}"
 fi
 
 CREATE_DATA="vmid=${CONTAINER_ID}"
 CREATE_DATA="${CREATE_DATA}&hostname=${CONTAINER_HOSTNAME}"
-CREATE_DATA="${CREATE_DATA}&ostype=ubuntu"
-CREATE_DATA="${CREATE_DATA}&osid=${TEMPLATE}"
+CREATE_DATA="${CREATE_DATA}&ostemplate=${OSTEMPLATE}"
 CREATE_DATA="${CREATE_DATA}&storage=${STORAGE}"
 CREATE_DATA="${CREATE_DATA}&rootfs=${STORAGE}:${DISK_SIZE}"
 CREATE_DATA="${CREATE_DATA}&cores=${CORES}"
 CREATE_DATA="${CREATE_DATA}&memory=${MEMORY}"
 CREATE_DATA="${CREATE_DATA}&password=${CONTAINER_PASS}"
-CREATE_DATA="${CREATE_DATA}&${NET_CONFIG}"
+CREATE_DATA="${CREATE_DATA}&net0=${NET_CONFIG}"
 CREATE_DATA="${CREATE_DATA}&nameserver=8.8.8.8"
-CREATE_DATA="${CREATE_DATA}&searchdomain=local"
 CREATE_DATA="${CREATE_DATA}&unprivileged=1"
 CREATE_DATA="${CREATE_DATA}&start=1"
 
 CREATE_RESPONSE=$(curl -s -k -X POST "https://${PROXMOX_HOST}:8006/api2/json/nodes/${NODE}/lxc" \
-    -H "Authorization: PVEAPIToken=${PROXMOX_USER}" \
-    -H "CSRFPreventionToken: $CSRF" \
+    -b "PVEAuthCookie=${TICKET}" \
+    -H "CSRFPreventionToken: ${CSRF}" \
     -H "Content-Type: application/x-www-form-urlencoded" \
-    -d "$CREATE_DATA" 2>/dev/null)
+    -d "$CREATE_DATA" 2>&1)
 
-if echo "$CREATE_RESPONSE" | grep -q '"error"'; then
+# Check for errors in response
+if echo "$CREATE_RESPONSE" | grep -q '"errors"' || echo "$CREATE_RESPONSE" | grep -q '"error"'; then
     echo -e "${RED}ERROR: Failed to create LXC${NC}"
-    echo "Response: $CREATE_RESPONSE"
+    echo "Response:"
+    echo "$CREATE_RESPONSE"
+    echo ""
+    echo "Common issues:"
+    echo "  - Container ID ${CONTAINER_ID} already exists"
+    echo "  - Template ${TEMPLATE} not available on storage"
+    echo "  - Insufficient permissions"
     exit 1
 fi
 
@@ -142,29 +210,96 @@ echo -e "${GREEN}✓ LXC container created${NC}"
 echo -e "${BLUE}[4/7] Waiting for container to boot...${NC}"
 sleep 15
 
-ATTEMPTS=0
-while [ $ATTEMPTS -lt 30 ]; do
-    CONTAINER_IP=$(curl -s -k -X GET "https://${PROXMOX_HOST}:8006/api2/json/nodes/${NODE}/lxc/${CONTAINER_ID}/status/current" \
-        -H "Authorization: PVEAPIToken=${PROXMOX_USER}" \
-        -H "CSRFPreventionToken: $CSRF" 2>/dev/null | grep -o '"ip":[^,}]*' | cut -d'"' -f4)
-    
-    if [ ! -z "$CONTAINER_IP" ] && [ "$CONTAINER_IP" != "0.0.0.0" ]; then
-        echo -e "${GREEN}✓ Container is running at $CONTAINER_IP${NC}"
-        break
-    fi
-    
-    echo -n "."
-    sleep 2
-    ATTEMPTS=$((ATTEMPTS + 1))
-done
+# Try multiple methods to get container IP
+CONTAINER_IP=""
 
+# Method 1: Try pct command first (most reliable if available)
+if command -v pct &> /dev/null; then
+    echo "Trying pct command..."
+    ATTEMPTS=0
+    while [ $ATTEMPTS -lt 30 ]; do
+        CONTAINER_IP=$(pct exec $CONTAINER_ID -- ip -4 addr show eth0 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1)
+        
+        if [ ! -z "$CONTAINER_IP" ] && [ "$CONTAINER_IP" != "0.0.0.0" ]; then
+            echo -e "${GREEN}✓ Container is running at $CONTAINER_IP (via pct)${NC}"
+            break
+        fi
+        
+        echo -n "."
+        sleep 2
+        ATTEMPTS=$((ATTEMPTS + 1))
+    done
+fi
+
+# Method 2: Try Proxmox API with better parsing
 if [ -z "$CONTAINER_IP" ] || [ "$CONTAINER_IP" == "0.0.0.0" ]; then
-    echo -e "${YELLOW}⚠ Could not automatically detect IP, trying static IP assignment...${NC}"
+    echo ""
+    echo "Trying Proxmox API..."
+    ATTEMPTS=0
+    while [ $ATTEMPTS -lt 20 ]; do
+        # Try to get network interfaces
+        API_RESPONSE=$(curl -s -k -X GET "https://${PROXMOX_HOST}:8006/api2/json/nodes/${NODE}/lxc/${CONTAINER_ID}/interfaces" \
+            -b "PVEAuthCookie=${TICKET}" \
+            -H "CSRFPreventionToken: ${CSRF}" 2>/dev/null)
+        
+        # Try to extract IP from response
+        CONTAINER_IP=$(echo "$API_RESPONSE" | grep -oP '"inet":\s*"\K[^/]+' | head -1)
+        
+        # Also try alternative parsing
+        if [ -z "$CONTAINER_IP" ]; then
+            CONTAINER_IP=$(echo "$API_RESPONSE" | grep -oP '\d+\.\d+\.\d+\.\d+' | grep -v "127.0.0.1" | grep -v "0.0.0.0" | head -1)
+        fi
+        
+        if [ ! -z "$CONTAINER_IP" ] && [ "$CONTAINER_IP" != "0.0.0.0" ] && [ "$CONTAINER_IP" != "127.0.0.1" ]; then
+            echo -e "${GREEN}✓ Container is running at $CONTAINER_IP (via API)${NC}"
+            break
+        fi
+        
+        echo -n "."
+        sleep 3
+        ATTEMPTS=$((ATTEMPTS + 1))
+    done
+fi
+
+# Method 3: Fallback options
+if [ -z "$CONTAINER_IP" ] || [ "$CONTAINER_IP" == "0.0.0.0" ] || [ "$CONTAINER_IP" == "127.0.0.1" ]; then
+    echo ""
+    echo -e "${YELLOW}⚠ Could not automatically detect IP${NC}"
+    echo -e "${BLUE}Trying alternative methods...${NC}"
+    
+    # If static IP was configured, use that
     if [ ! -z "$STATIC_IP" ]; then
         CONTAINER_IP=$(echo $STATIC_IP | cut -d'/' -f1)
+        echo -e "${GREEN}Using configured static IP: $CONTAINER_IP${NC}"
     else
-        echo -e "${YELLOW}Please check your Proxmox UI for the container IP address${NC}"
-        read -p "$(echo -e ${YELLOW}'Enter container IP manually:' ${NC})" CONTAINER_IP
+        # Try to find IP via SSH scan on common subnet (if on same network)
+        echo -e "${YELLOW}Please find the container IP manually:${NC}"
+        echo "  Option 1: Check Proxmox web UI → Container ${CONTAINER_ID} → Summary"
+        echo "  Option 2: In Proxmox shell, run: pct exec ${CONTAINER_ID} -- ip addr show eth0"
+        echo "  Option 3: Check your router's DHCP leases for 'matrix-effect'"
+        echo ""
+        
+        # Interactive prompt with validation
+        while true; do
+            read -p "$(echo -e ${YELLOW}'Enter container IP address: '${NC})" CONTAINER_IP
+            
+            # Validate IP format
+            if [[ $CONTAINER_IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+                # Check if reachable
+                if ping -c 1 -W 2 $CONTAINER_IP &> /dev/null; then
+                    echo -e "${GREEN}✓ IP is reachable${NC}"
+                    break
+                else
+                    echo -e "${YELLOW}⚠ IP does not respond to ping, but proceeding anyway...${NC}"
+                    read -p "Continue with this IP? (y/n): " CONFIRM
+                    if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
+                        break
+                    fi
+                fi
+            else
+                echo -e "${RED}Invalid IP format. Please enter a valid IP address (e.g., 192.168.1.100)${NC}"
+            fi
+        done
     fi
 fi
 
