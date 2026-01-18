@@ -22,9 +22,11 @@ another-matrix/
 │
 ├── docs/                         # Documentation
 │   ├── PROXMOX_DEPLOYMENT.md    # Complete Proxmox LXC guide
+│   ├── REORGANIZATION.md        # Summary of folder structure changes
 │   ├── ISSUES.md                # Issue tracking and resolved bugs
 │   └── agent-instructions.md    # Project development notes
 │
+├── CHANGELOG.md                 # Version history and updates
 └── README.md                     # This file (project overview)
 ```
 
@@ -38,9 +40,9 @@ cd src && python3 -m http.server 8000
 # Then open http://localhost:8000
 ```
 
-### Docker/Podman Container
+### Docker / Podman Container
 ```bash
-# Build
+# Build (using podman or docker)
 podman build -t matrix-effect -f docker/Dockerfile .
 
 # Run
@@ -68,6 +70,8 @@ cd deploy
 | **LXC direct setup** | Run `deploy/setup.sh` inside LXC |
 | **Proxmox automation** | Execute `deploy/deploy-to-proxmox.sh` |
 | **Deployment docs** | See `docs/PROXMOX_DEPLOYMENT.md` |
+| **Project history** | Read `CHANGELOG.md` |
+| **Structure changes** | Read `docs/REORGANIZATION.md` |
 | **Bug tracking** | Check `docs/ISSUES.md` |
 
 ## Features Included
