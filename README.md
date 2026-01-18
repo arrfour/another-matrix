@@ -44,7 +44,7 @@ cd src && python3 -m http.server 8000
 podman build -t matrix-effect -f docker/Dockerfile .
 
 # Run
-podman run -it --rm -p 8880:80 matrix-effect
+podman run -d --restart unless-stopped -p 8880:80 matrix-effect
 
 # Access at http://localhost:8880
 ```
