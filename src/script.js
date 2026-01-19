@@ -40,15 +40,35 @@ let typingTimeout = null;
 let currentTypingIndex = 0;
 
 // Enhanced Cyberpunk data generators
+function generateIPAddress() {
+  return Array.from({ length: 4 }, () => Math.floor(Math.random() * 256)).join('.');
+}
+
+let visitorIP = '127.0.0.1';
+fetch('https://api.ipify.org?format=json')
+  .then(res => res.json())
+  .then(data => { visitorIP = data.ip; })
+  .catch(() => { });
+
+function getSystemInfo() {
+  const info = [
+    `PLATFORM: ${navigator.platform}`,
+    `LANGUAGE: ${navigator.language}`,
+    `RESOLUTION: ${window.screen.width}x${window.screen.height}`,
+    `CORES: ${navigator.hardwareConcurrency || 'N/A'}`,
+    `AGENT: ${navigator.userAgent.split('/')[0]}`
+  ];
+  return info[Math.floor(Math.random() * info.length)];
+}
 function generateCyberpunkData() {
   const types = [
     () => `[${generateIPAddress()}]`,
-    () => `0x${Array.from({length: 16}, () => Math.floor(Math.random() * 16).toString(16)).join('').toUpperCase()}`,
+    () => `0x${Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('').toUpperCase()}`,
     () => `${new Date().toISOString().replace('T', ' ').substring(0, 19)} UTC`,
     () => `CONN:${Math.floor(Math.random() * 65535)}`,
     () => `PID:${Math.floor(Math.random() * 99999)}`,
     () => `MEM:${Math.floor(Math.random() * 8192)}MB CPU:${Math.floor(Math.random() * 100)}%`,
-    () => `[${Array.from({length: 32}, () => byteToHex(generateRandomByte())).join(' ')}]`,
+    () => `[${Array.from({ length: 32 }, () => byteToHex(generateRandomByte())).join(' ')}]`,
     () => `USER:${['ANON', 'ROOT', 'NEO', 'TRINITY', 'MORPHEUS', 'AGENT_SMITH'][Math.floor(Math.random() * 6)]}`,
     () => `FIREWALL:COMPROMISED 🔥`,
     () => `SOCKET:OPEN [${generateIPAddress()}]:${Math.floor(Math.random() * 65535)}`,
@@ -57,9 +77,9 @@ function generateCyberpunkData() {
     () => `FILE://${['etc/shadow', 'root/.ssh', 'var/log/auth', 'opt/matrix'][Math.floor(Math.random() * 4)]} 🔓`,
     () => `SCAN:${['NMAP', 'MASSCAN', 'ZMAP'][Math.floor(Math.random() * 3)]} TARGET_RANGE:${generateIPAddress()}/16 🎯`,
     () => `EXPLOIT:${['buffer_overflow', 'sql_inject', 'xss_payload', 'privesc'][Math.floor(Math.random() * 4)]} [ACTIVE] ⚡`,
-    () => `CRYPTO:SHA256(${Array.from({length: 4}, () => byteToHex(generateRandomByte())).join('')})`,
+    () => `CRYPTO:SHA256(${Array.from({ length: 4 }, () => byteToHex(generateRandomByte())).join('')})`,
     () => `BANDWIDTH:${Math.floor(Math.random() * 999)}Mbps LATENCY:${Math.floor(Math.random() * 50)}ms 💨`,
-    () => `[${Array.from({length: 8}, () => (Math.random() * 255 | 0).toString(16).padStart(2, '0')).join(':')}]`,
+    () => `[${Array.from({ length: 8 }, () => (Math.random() * 255 | 0).toString(16).padStart(2, '0')).join(':')}]`,
     () => generateProgressBar(),
     () => `TRANSFER:${Math.floor(Math.random() * 100)}% 📥`,
     () => `DECRYPTING 🔐`,
@@ -111,47 +131,47 @@ const colorThemes = {
 // Markdown to HTML conversion (simple)
 function markdownToHtml(markdown) {
   let html = markdown;
-  
+
   // Escape special HTML characters first
   html = html
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
-  
+
   // Headers
   html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
   html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
   html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
-  
+
   // Bold and italic
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
   html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
   html = html.replace(/_(.*?)_/g, '<em>$1</em>');
-  
+
   // Inline code
   html = html.replace(/`(.*?)`/g, '<code>$1</code>');
-  
+
   // Blockquotes
   html = html.replace(/^> (.*?)$/gm, '<blockquote>$1</blockquote>');
-  
+
   // Code blocks
   html = html.replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>');
-  
+
   // Links
   html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" style="color: var(--theme-glow);">$1</a>');
-  
+
   // Lists
   html = html.replace(/^\* (.*?)$/gm, '<li>$1</li>');
   html = html.replace(/^- (.*?)$/gm, '<li>$1</li>');
-  html = html.replace(/(\n<li>.*?<\/li>)+/s, function(match) {
+  html = html.replace(/(\n<li>.*?<\/li>)+/s, function (match) {
     return '<ul>' + match + '</ul>';
   });
-  
+
   // Line breaks
   html = html.replace(/\n\n/g, '</p><p>');
   html = '<p>' + html + '</p>';
-  
+
   return html;
 }
 
@@ -183,7 +203,7 @@ function getDefaultPreferences() {
       console.warn('Failed to parse custom defaults:', e);
     }
   }
-  
+
   // Return hardcoded defaults
   return {
     font: 'monospace',
@@ -251,7 +271,7 @@ const FRAME_INTERVAL = 33; // ~30fps instead of 60fps
 // Debounce helper for slider updates
 function debounce(func, delay) {
   let timeoutId;
-  return function(...args) {
+  return function (...args) {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
   };
@@ -261,14 +281,14 @@ function detectSystemFont() {
   // Check if fonts are actually available by testing rendering
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  
+
   const testString = 'M';
   const testFontSize = '20px';
-  
+
   // Get baseline width with fallback
   ctx.font = `${testFontSize} monospace`;
   const baselineWidth = ctx.measureText(testString).width;
-  
+
   // Try each font to see if it renders differently (indicating it's available)
   for (let font of fontList) {
     try {
@@ -279,11 +299,11 @@ function detectSystemFont() {
         currentFont = font;
         break;
       }
-    } catch(e) {
+    } catch (e) {
       // Font not available, continue
     }
   }
-  
+
   return currentFont;
 }
 
@@ -298,26 +318,26 @@ function populateFontSelector() {
     }
     selector.appendChild(option);
   });
-  
+
   selector.addEventListener('change', (e) => {
     currentFont = e.target.value;
     updatePixelFonts();
     savePreferences();
   });
-  
+
   // Add size slider control with debouncing
   const sizeSlider = document.getElementById('sizeSlider');
   const sizeLabel = document.getElementById('sizeLabel');
   sizeSlider.value = currentFontSize;
   sizeLabel.textContent = currentFontSize + 'px';
-  
+
   const debouncedSizeUpdate = debounce((value) => {
     currentFontSize = parseInt(value);
     sizeLabel.textContent = currentFontSize + 'px';
     updatePixelFonts();
     savePreferences();
   }, 100);
-  
+
   sizeSlider.addEventListener('input', (e) => {
     debouncedSizeUpdate(e.target.value);
   });
@@ -327,14 +347,14 @@ function populateFontSelector() {
   const densityLabel = document.getElementById('densityLabel');
   densitySlider.value = currentDensity;
   densityLabel.textContent = currentDensity;
-  
+
   const debouncedDensityUpdate = debounce((value) => {
     currentDensity = parseInt(value);
     densityLabel.textContent = currentDensity;
     updateDensity(currentDensity);
     savePreferences();
   }, 150);
-  
+
   densitySlider.addEventListener('input', (e) => {
     debouncedDensityUpdate(e.target.value);
   });
@@ -363,27 +383,36 @@ function populateFontSelector() {
   function typeMessage(message, callback) {
     const cursorText = document.getElementById('cursorText');
     const cursorBlock = document.getElementById('cursorBlock');
+    const cursor = document.getElementById('cursor');
     cursorBlock.classList.remove('blinking'); // Stop blinking while typing
-    
+
     // Apply current font settings to cursor text
     cursorText.style.fontFamily = currentFont + ', monospace';
     cursorText.style.fontSize = currentFontSize + 'px';
     const theme = colorThemes[currentColorTheme];
     cursorText.style.color = theme.color;
     cursorText.style.textShadow = `0 0 3px ${theme.glow}`;
-    
+
     // Apply same styles to cursor block
     cursorBlock.style.fontFamily = currentFont + ', monospace';
     cursorBlock.style.fontSize = currentFontSize + 'px';
     cursorBlock.style.color = theme.color;
     cursorBlock.style.textShadow = `0 0 3px ${theme.glow}`;
-    
+
+    // Calculate random screen coverage (20-80%)
+    const widthPercent = 20 + Math.floor(Math.random() * 61);
+    const heightPercent = 20 + Math.floor(Math.random() * 61);
+
+    // Apply width constraint
+    cursor.style.maxWidth = widthPercent + 'vw';
+
+    // Calculate number of lines needed to fill the height constraint
+    // Subtract some padding to be safe
+    const totalLines = Math.floor((window.innerHeight * (heightPercent / 100)) / currentFontSize);
+
     let index = 0;
     cursorText.textContent = '';
-    
-    // Always add heavy cyberpunk data - 80% chance for extensive hacker activity
-    const intensity = Math.random() < 0.8 ? 'heavy' : 'light';
-    
+
     function typeChar() {
       if (index < message.length) {
         cursorText.textContent += message[index];
@@ -393,40 +422,41 @@ function populateFontSelector() {
         // Message complete, add cyberpunk data dynamically
         typingTimeout = setTimeout(() => {
           cursorText.textContent += '\n';
-          
+
           // Function to display data line by line with delays
-          function addDataLine(lineIndex, totalLines, isFinal = false) {
-            if (lineIndex < totalLines) {
+          function addDataLine(lineIndex, maxLines, isFinal = false) {
+            if (lineIndex < maxLines) {
+              const delay = isFinal ? 300 : Math.max(10, 500 - (lineIndex * 10)); // Speeds up as it goes
               typingTimeout = setTimeout(() => {
                 cursorText.textContent += generateCyberpunkData() + '\n';
-                addDataLine(lineIndex + 1, totalLines, isFinal);
-              }, 300 + Math.random() * 200); // Random delay between lines for dynamic effect
+                // Auto-scroll to bottom if needed
+                window.scrollTo(0, document.body.scrollHeight);
+                addDataLine(lineIndex + 1, maxLines, isFinal);
+              }, 20 + Math.random() * 30); // Very fast typing for data to fill screen
             } else if (isFinal) {
               // All data complete, wait then reset
               typingTimeout = setTimeout(() => {
                 cursorText.textContent = '';
                 cursorBlock.classList.add('blinking');
+                // Reset maxWidth
+                cursor.style.maxWidth = '600px';
                 if (callback) callback();
-              }, 2000); // Show final data for 2 seconds before resetting
+              }, 3000); // Show final data for 3 seconds before resetting
             } else {
-              // More data coming
+              // Main burst done, add a few cleanup lines
               typingTimeout = setTimeout(() => {
                 addDataLine(0, 3, true); // Add 3 final lines
-              }, 1500); // Wait 1.5 seconds before final burst
+              }, 500);
             }
           }
-          
-          if (intensity === 'heavy') {
-            // Heavy hacker activity - display 6 lines with delays, then 3 more
-            addDataLine(0, 6, false);
-          } else {
-            // Light hacker activity - just 3 lines
-            addDataLine(0, 3, true);
-          }
+
+          // Execute the data dump
+          addDataLine(0, totalLines, false);
+
         }, 500); // Brief pause before data appears
       }
     }
-    
+
     typeChar();
   }
 
@@ -458,7 +488,7 @@ function populateFontSelector() {
   const matrixToggleBtn = document.getElementById('matrixToggleBtn');
   const matrix = document.getElementById('matrix');
   const cursor = document.getElementById('cursor');
-  
+
   matrixToggleBtn.addEventListener('click', () => {
     matrixVisible = !matrixVisible;
     if (matrixVisible) {
@@ -505,7 +535,7 @@ function populateFontSelector() {
   const controlContent = document.getElementById('controlContent');
   const controlPanel = document.getElementById('controlPanel');
   let fadeTimeout;
-  
+
   // Load and apply saved collapse state on page load
   const isCollapsed = loadCollapseState();
   if (isCollapsed) {
@@ -516,7 +546,7 @@ function populateFontSelector() {
     controlContent.classList.toggle('collapsed');
     const nowCollapsed = controlContent.classList.contains('collapsed');
     saveCollapseState(nowCollapsed);
-    
+
     // Keep panel visible when toggling
     controlPanel.classList.remove('faded');
     clearTimeout(fadeTimeout);
@@ -562,10 +592,10 @@ function populateFontSelector() {
       try {
         readmeContent.innerHTML = '<p>Loading...</p>';
         readmeModal.classList.add('visible');
-        
+
         const response = await fetch('README.md');
         if (!response.ok) throw new Error('Failed to fetch README.md');
-        
+
         const markdown = await response.text();
         readmeContent.innerHTML = markdownToHtml(markdown);
       } catch (error) {
@@ -633,7 +663,7 @@ function updatePixelFonts() {
     pixel.style.fontFamily = currentFont;
     pixel.style.fontSize = currentFontSize + 'px';
   });
-  
+
   // Update cursor fonts
   const cursorText = document.getElementById('cursorText');
   const cursorBlock = document.getElementById('cursorBlock');
@@ -645,11 +675,11 @@ function updatePixelFonts() {
     cursorBlock.style.fontFamily = currentFont + ', monospace';
     cursorBlock.style.fontSize = currentFontSize + 'px';
   }
-  
+
   // Update control panel font
   const controlPanel = document.getElementById('controlPanel');
   controlPanel.style.fontFamily = currentFont + ', monospace';
-  
+
   // Also update selects and inputs in control panel
   const inputs = controlPanel.querySelectorAll('select, input[type="range"], button, label');
   inputs.forEach(input => {
@@ -664,7 +694,7 @@ function updatePixelColors() {
     pixel.style.color = theme.color;
     pixel.style.textShadow = `0 0 3px ${theme.glow}`;
   });
-  
+
   // Also update cursor colors
   const cursorText = document.getElementById('cursorText');
   const cursorBlock = document.getElementById('cursorBlock');
@@ -676,7 +706,7 @@ function updatePixelColors() {
     cursorBlock.style.color = theme.color;
     cursorBlock.style.textShadow = `0 0 3px ${theme.glow}`;
   }
-  
+
   // Update CSS variables for control panel and all elements
   applyTheme(currentColorTheme);
 }
@@ -704,7 +734,7 @@ function resetAllCharacters() {
 function updateDensity(newDensity) {
   const matrixDiv = document.getElementById('matrix');
   const difference = newDensity - pixels.length;
-  
+
   if (difference > 0) {
     // Add new pixels
     for (let i = 0; i < difference; i++) {
@@ -724,12 +754,12 @@ function updateDensity(newDensity) {
 function addPixel() {
   const pixel = document.createElement('div');
   pixel.classList.add('pixel');
-  
+
   const x = Math.random() * window.innerWidth;
   const y = Math.random() * window.innerHeight;
   const speed = 2 + Math.random() * 6;
   const opacity = 0.3 + Math.random() * 0.7;
-  
+
   pixel.style.opacity = opacity;
   pixel.style.fontFamily = currentFont;
   pixel.style.fontSize = currentFontSize + 'px';
@@ -742,7 +772,7 @@ function addPixel() {
   } else {
     pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
   }
-  
+
   matrixDiv.appendChild(pixel);
   pixels.push({ element: pixel, speed: speed, x: x, y: y, lastX: x, lastY: y, nextCharChange: Math.random() * 100 });
 }
@@ -769,12 +799,12 @@ function initializeApp() {
   for (let i = 0; i < numPixels; i++) {
     const pixel = document.createElement('div');
     pixel.classList.add('pixel');
-    
+
     const x = Math.random() * window.innerWidth;
     const y = Math.random() * window.innerHeight;
     const speed = 2 + Math.random() * 6;
     const opacity = 0.3 + Math.random() * 0.7;
-    
+
     pixel.style.opacity = opacity;
     pixel.style.fontFamily = currentFont;
     pixel.style.fontSize = currentFontSize + 'px';
@@ -782,14 +812,14 @@ function initializeApp() {
     pixel.style.color = theme.color;
     pixel.style.textShadow = `0 0 3px ${theme.glow}`;
     pixel.style.transform = `translate(${x}px, ${y}px)`;
-    
+
     // Set content based on mode
     if (dataMode) {
       pixel.textContent = generateRandomDataSequence(3);
     } else {
       pixel.textContent = chars[Math.floor(Math.random() * chars.length)];
     }
-    
+
     matrixDiv.appendChild(pixel);
     pixels.push({ element: pixel, speed: speed, x: x, y: y, lastX: x, lastY: y, nextCharChange: Math.random() * 100 });
   }
@@ -797,14 +827,14 @@ function initializeApp() {
   // Animation loop with frame throttling
   let lastUpdate = 0;
   let regenerationCounter = 0; // Counter to gradually add characters when faucet turns back ON
-  
+
   function animate() {
     const now = performance.now();
-    
+
     // Only update every FRAME_INTERVAL milliseconds (~30fps)
     if (now - lastUpdate >= FRAME_INTERVAL) {
       lastUpdate = now;
-      
+
       // Gradually regenerate characters when faucet is turned back ON
       if (matrixVisible && pixels.length < currentDensity) {
         regenerationCounter++;
@@ -817,11 +847,11 @@ function initializeApp() {
         // Reset counter when faucet is OFF
         regenerationCounter = 0;
       }
-      
+
       for (let i = 0; i < pixels.length; i++) {
         const p = pixels[i];
         p.y += p.speed;
-        
+
         // Reset to top when falling off screen (only if matrix is visible/ON)
         if (p.y > window.innerHeight) {
           if (matrixVisible) {
@@ -830,7 +860,7 @@ function initializeApp() {
             p.x = Math.random() * window.innerWidth;
             p.lastX = p.x;
             p.lastY = p.y;
-            
+
             // Update character and styling when reset
             if (dataMode) {
               p.element.textContent = generateRandomDataSequence(3);
@@ -855,7 +885,7 @@ function initializeApp() {
             p.lastX = p.x;
             p.lastY = p.y;
           }
-          
+
           // Character change with batched counter (only if matrix is visible/ON)
           if (matrixVisible) {
             p.nextCharChange--;
