@@ -53,28 +53,42 @@ root-folder/
 
 ### Option 2: Container Deployment (Recommended)
 
-**Build the container:**
+The container image is designed to be versatile, supporting both standard server deployments and interactive monitoring.
+
+**Build the image:**
+
 ```bash
+docker build -t matrix-effect -f docker/Dockerfile .
+# OR
 podman build -t matrix-effect -f docker/Dockerfile .
 ```
 
-**Run the container:**
+**Run in Dashboard Mode (Interactive):**
+Use `-it` to enable the interactive terminal UI.
+
 ```bash
-podman run -it --rm -p 8880:80 matrix-effect
+docker run -it --rm -p 8880:80 matrix-effect
 ```
 
+- **Real-time Logs**: Shows the last 30 nginx requests.
+
+- **Controls**: Press `q` to quit, `c` to clear the log.
+- **Safety**: Automatically restores terminal settings on exit.
+
+**Run in Server Mode (Background):**
+Omit `-it` or use `-d` for a clean, low-resource background service.
+
+```bash
+docker run -d --name matrix -p 8880:80 matrix-effect
+```
+
+- **Optimization**: Automatically detects the absence of a TTY and disables the dashboard to save CPU/Memory.
+
+- **Production Ready**: Uses standard nginx foreground execution.
+
 **Access in browser:**
+
 - Open `http://localhost:8880`
-
-**Container Terminal UI:**
-- Displays real-time nginx access logs
-- Shows last 30 requests
-- Refreshes every 15 seconds
-- Press `q` to gracefully quit
-- Press `c` to clear the log
-- Ctrl-C works as fallback exit
-
-> **Note:** Docker and Podman commands are identical. Replace `podman` with `docker` if using Docker.
 
 ### Option 3: Proxmox LXC Deployment (Advanced)
 
@@ -83,6 +97,7 @@ See [deploy/PROXMOX_DEPLOYMENT.md](deploy/PROXMOX_DEPLOYMENT.md) or [docs/PROXMO
 ## Control Panel Usage
 
 Use the control panel to customize:
+
 - **Font**: Select from available monospace fonts
 - **Size**: Slider to scale characters (8-60px)
 - **Density**: Adjust number of falling characters (25-500)
@@ -90,6 +105,7 @@ Use the control panel to customize:
 - **Data Mode**: Toggle to display 3-bit binary sequences instead of characters
 
 **Control Panel Buttons** (left to right):
+
 - **↻ Reset**: Revert all settings to hardcoded defaults
 - **💾 Save**: Save your current settings as new defaults
 - **⟲ Refresh**: Reload the page while preserving your settings
@@ -101,6 +117,7 @@ Use the control panel to customize:
 ## Technical Details
 
 ### Technologies
+
 - **HTML5**: Semantic markup and responsive structure
 - **CSS3**: CSS Custom Properties for dynamic theming, GPU-accelerated animations, HTML entity glyphs
 - **Vanilla JavaScript**: No dependencies; pure ES6 with Canvas API for font detection and Fetch API for README loading
@@ -110,17 +127,20 @@ Use the control panel to customize:
 ### Architecture
 
 **CSS Custom Properties**
+
 - Dynamic theming via `--theme-color` and `--theme-glow` variables
 - Single point of color management for entire UI
 - Instant theme switching without DOM manipulation
 
 **localStorage Persistence**
+
 - Preferences: font, size, density, color theme, data mode, matrix visibility
 - Custom defaults override hardcoded values
 - Control panel collapse state (defaults to closed)
 - Survives page refreshes and browser restarts
 
 **Animation Engine**
+
 - 30fps throttled rendering (33ms frame interval) for smooth motion
 - Selective DOM updates: only updates when position changes >0.5px
 - Batched character changes reduce Math.random() calls
@@ -130,15 +150,17 @@ Use the control panel to customize:
 - Data mode generates 3-bit sequences dynamically
 
 **Container Architecture**
+
 - nginx:alpine base for minimal footprint
-- Custom shell entrypoint with terminal UI
-- Real-time log monitoring (last 30 entries)
-- Graceful shutdown handling (SIGTERM/SIGINT)
-- 15-second refresh interval for log persistence
+- Custom shell entrypoint with auto-switching modes (Interactive vs. Background)
+- **TTY Detection**: uses `[ -t 0 ]` to decide whether to launch the Terminal UI or just Nginx
+- Real-time log monitoring with graceful shutdown handling
+- Spin-protection: uses `sleep 1` to prevent CPU exhaustion if stdin is lost
 
 ## Browser Compatibility
 
 Works on all modern browsers supporting:
+
 - ES6+ JavaScript (async/await, fetch)
 - Canvas API (for font detection)
 - CSS Custom Properties
@@ -148,11 +170,13 @@ Works on all modern browsers supporting:
 ## Customization
 
 ### Quick Customization (No Code Editing)
+
 Use the control panel to adjust fonts, sizes, density, and colors. Click **Save Current** to make your preferences the new defaults.
 
 ### Advanced Customization (Editing Files)
 
 **Colors & Themes** - Edit `src/script.js`:
+
 ```javascript
 const colorThemes = {
   green: { color: '#0f0', glow: '#0f0', label: 'Green' },
@@ -162,11 +186,13 @@ const colorThemes = {
 ```
 
 **Character Set** - Edit `src/script.js`:
+
 ```javascript
 const chars = 'アイウエオカキクケコ...'; // Modify katakana or other characters
 ```
 
 **Data Mode Sequence Length** - Edit `src/script.js`:
+
 ```javascript
 function generateRandomDataSequence(length = 3) {
   // Change default length parameter to adjust bit sequence length
@@ -174,6 +200,7 @@ function generateRandomDataSequence(length = 3) {
 ```
 
 **Default Values** - Edit `src/script.js` in `getDefaultPreferences()`:
+
 ```javascript
 return {
   font: 'monospace',
@@ -184,6 +211,7 @@ return {
 ```
 
 **Animation Speed** - Edit `src/script.js`:
+
 ```javascript
 const FRAME_INTERVAL = 33; // milliseconds (lower = faster, higher = slower)
 ```
@@ -192,14 +220,14 @@ const FRAME_INTERVAL = 33; // milliseconds (lower = faster, higher = slower)
 
 Originally created by Gemma 3:4b local instance. Evolved through multiple iterations with CSS positioning fixes, proper animation, font detection, theme system, user preference persistence, modal viewers, and intuitive UI design.
 
-**Current version (v2.0)** adds:
+**Current version (v2.1)** adds:
+
+- **Intelligent Entrypoint**: Fixed high CPU usage/hanging when running without `-it`.
+- **Automatic Mode Selection**: Detects TTY to switch between Dashboard and Server modes.
+- **Terminal Restoration**: Ensured terminal settings are reset on container exit.
 - Docker/Podman containerization with nginx web server
 - Interactive terminal UI with log monitoring and graceful shutdown
 - Dynamic README loading via Fetch API (no longer embedded in HTML)
-- Fixed `generateRandomDataSequence` bug to properly generate bit sequences
-- HTML entity-based glyphs for universal browser compatibility
-- 3-bit binary sequence display in Data Mode
-- Enhanced control panel with better font support for Unicode symbols
 - Folder structure organization (src/, docker/, deploy/, docs/)
 
 All preferences (including matrix visibility state) are saved to localStorage for seamless state restoration across sessions.

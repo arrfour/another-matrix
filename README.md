@@ -33,6 +33,7 @@ another-matrix/
 ## Quick Start
 
 ### Local Browser (Fastest)
+
 ```bash
 # Simply open src/index.html in your web browser
 # Or use a local server:
@@ -41,17 +42,33 @@ cd src && python3 -m http.server 8000
 ```
 
 ### Docker / Podman Container
+
+The container automatically detects if you're running interactively or in the background.
+
+**Option A: Background Mode (Standard)**
+Runs as a lightweight web server. Best for persistent deployments.
+
 ```bash
-# Build (using podman or docker)
-podman build -t matrix-effect -f docker/Dockerfile .
-
-# Run
-podman run -d --restart unless-stopped -p 8880:80 matrix-effect
-
-# Access at http://localhost:8880
+# Docker
+docker run -d --name matrix -p 8880:80 matrix-effect
+# Podman
+podman run -d --name matrix -p 8880:80 matrix-effect
 ```
 
+**Option B: Dashboard Mode (Interactive)**
+Runs a terminal-based dashboard with real-time logs and controls.
+
+```bash
+# Docker
+docker run -it --rm -p 8880:80 matrix-effect
+# Podman
+podman run -it --rm -p 8880:80 matrix-effect
+```
+
+**Access the web UI at:** `http://localhost:8880`
+
 ### Proxmox LXC (Advanced)
+
 ```bash
 # Run from deploy directory
 cd deploy
@@ -92,12 +109,14 @@ cd deploy
 ## File Dependencies
 
 **Dockerfile** references:
+
 - `src/index.html`
 - `src/script.js`
 - `src/README.md`
 - `docker/entrypoint.sh`
 
 **deploy-to-proxmox.sh** references:
+
 - `src/index.html`
 - `src/script.js`
 - `src/README.md`
@@ -106,18 +125,34 @@ cd deploy
 **setup.sh** expects files in current directory after transfer (internal script)
 
 **index.html** expects:
+
 - `script.js` in same directory
 - `README.md` in same directory
 
 ## Build & Deployment
 
-### Docker/Podman
+### Docker / Podman
+
+**Building:**
+
 ```bash
+docker build -t matrix-effect -f docker/Dockerfile .
+# OR
 podman build -t matrix-effect -f docker/Dockerfile .
-podman run -it --rm -p 8880:80 matrix-effect
+```
+
+**Running:**
+
+```bash
+# Interactive Dashboard mode
+docker run -it --rm -p 8880:80 matrix-effect
+
+# Background / Server mode
+docker run -d --name matrix -p 8880:80 matrix-effect
 ```
 
 ### Proxmox LXC
+
 ```bash
 cd deploy
 ./deploy-to-proxmox.sh
