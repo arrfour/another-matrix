@@ -32,29 +32,48 @@ while true; do
     exit 1
   fi
 
-  clear
-  
-  # Draw header
-  echo "=========================================="
-  echo "  Matrix Effect - Running on localhost:8880"
-  echo "=========================================="
-  echo ""
-  echo "Commands: [q] Quit | [c] Clear Log"
-  echo ""
-  echo "--- Server Log (Last 30 Requests) ---"
-  echo ""
-  
-  # Show last 30 lines of access log
+  # Automated Log Management (Rotation/Compaction)
+  # Keep log file under 5000 lines, compacting to most recent 1000 lines if exceeded
   if [ -f /var/log/nginx/access.log ]; then
-    tail -30 /var/log/nginx/access.log 2>/dev/null | sed 's/^/  /'
+    LOG_LINES=$(wc -l < /var/log/nginx/access.log 2>/dev/null || echo 0)
+    if [ "$LOG_LINES" -gt 5000 ]; then
+      # Use a temporary file for safe rotation
+      tail -1000 /var/log/nginx/access.log > /var/log/nginx/access.log.tmp 2>/dev/null
+      mv /var/log/nginx/access.log.tmp /var/log/nginx/access.log 2>/dev/null
+      # Log the rotation event to the log itself for troubleshooting
+      echo "$(date +'%Y/%m/%d %H:%M:%S') [info] Log rotated by entrypoint (exceeded 5000 lines)" >> /var/log/nginx/access.log
+    fi
   fi
-  
-  echo ""
-  echo ">>> "
-  
-  # Check for user input (with 15 second timeout so logs stay visible longer)
-  # dd on some systems returns immediately if no stdin is present, causing a tight loop.
-  char=$(timeout 15 dd bs=1 count=1 2>/dev/null)
+
+  # Skip UI if not in a TTY (though we handle this at start, double safety)
+  if [ -t 0 ]; then
+    clear
+    
+    # Draw header
+    echo "=========================================="
+    echo "  Matrix Effect - Running on localhost:8880"
+    echo "=========================================="
+    echo ""
+    echo "Commands: [q] Quit | [c] Clear Log"
+    echo ""
+    echo "--- Server Log (Last 30 Requests) ---"
+    echo ""
+    
+    # Show last 30 lines of access log
+    if [ -f /var/log/nginx/access.log ]; then
+      tail -30 /var/log/nginx/access.log 2>/dev/null | sed 's/^/  /'
+    fi
+    
+    echo ""
+    echo ">>> "
+    
+    # Check for user input (with 15 second timeout so logs stay visible longer)
+    char=$(timeout 15 dd bs=1 count=1 2>/dev/null)
+  else
+    # In background mode, just sleep to prevent high CPU, then loop back for rotation check
+    sleep 60
+    char=""
+  fi
   
   case "$char" in
     q|Q)
@@ -66,9 +85,9 @@ while true; do
       sleep 1
       ;;
     *)
-      # Small sleep to prevent tight loop if dd returns immediately (EOF)
-      # even if timeout didn't trigger.
-      sleep 1
+      # Small sleep to prevent tight loop if dd returns immediately
+      [ -t 0 ] && sleep 1
       ;;
   esac
 done
+

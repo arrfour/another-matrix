@@ -240,11 +240,27 @@ function saveAsDefault() {
 }
 
 function resetPreferences() {
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(DEFAULTS_STORAGE_KEY);
-  localStorage.removeItem(COLLAPSE_STATE_KEY);
+  // Define all known project keys for thorough cleanup
+  const projectKeys = [
+    STORAGE_KEY,
+    DEFAULTS_STORAGE_KEY,
+    COLLAPSE_STATE_KEY
+  ];
+
+  // Remove specific keys
+  projectKeys.forEach(key => localStorage.removeItem(key));
+
+  // Also scan for any keys that might have been added with the 'matrixEffect' prefix
+  // to ensure legacy or experimental sticks are also pruned.
+  Object.keys(localStorage).forEach(key => {
+    if (key.startsWith('matrixEffect')) {
+      localStorage.removeItem(key);
+    }
+  });
+
   location.reload();
 }
+
 
 // Collapse state management
 function loadCollapseState() {
