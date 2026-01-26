@@ -4,7 +4,7 @@ A browser-based Matrix rain effect with Docker/Podman containerization and Proxm
 
 ## Project Structure
 
-```
+```text
 another-matrix/
 ├── src/                          # Application source code
 │   ├── index.html               # HTML structure and embedded CSS
@@ -79,7 +79,7 @@ cd deploy
 ## What's Where
 
 | Task | File(s) |
-|------|---------|
+| ---- | ------- |
 | **Run locally** | Open `src/index.html` in browser |
 | **View features** | Read `src/README.md` |
 | **Docker build** | Use `docker/Dockerfile` |
