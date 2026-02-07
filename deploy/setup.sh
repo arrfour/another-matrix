@@ -85,6 +85,26 @@ nginx -t > /dev/null 2>&1 || {
     exit 1
 }
 
+# Set up logrotate for nginx logs to prevent storage overflow
+echo "Setting up log rotation..."
+cat > /etc/logrotate.d/nginx-matrix << 'LOGROTATE_EOF'
+/var/log/nginx/matrix-effect-*.log {
+    daily
+    missingok
+    rotate 7
+    compress
+    delaycompress
+    notifempty
+    create 0640 www-data adm
+    sharedscripts
+    postrotate
+        if [ -f /var/run/nginx.pid ]; then
+            kill -USR1 `cat /var/run/nginx.pid`
+        fi
+    endscript
+}
+LOGROTATE_EOF
+
 # Start nginx
 systemctl restart nginx
 systemctl enable nginx

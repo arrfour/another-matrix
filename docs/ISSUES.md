@@ -70,3 +70,59 @@ Fixed in **v2.1**
 - Container is now safe to run with or without `-it`.
 - CPU usage is negligible in non-interactive mode.
 - Dashboard only activates when a TTY is available.
+
+# Issue: Container Storage Overflow
+
+**Status: ✅ FIXED**
+
+## Problem
+
+- Container takes up a TON of space over time
+- Storage footprint on host/partition grows continuously
+- Issue affects long-running deployments
+
+## Affected Features
+
+- Docker/Podman deployments (both interactive and background modes)
+- Proxmox LXC deployments
+- Any long-running container instance
+
+## Root Cause
+
+- Nginx access logs (`/var/log/nginx/access.log`) growing unbounded
+- Nginx error logs (`/var/log/nginx/error.log`) growing unbounded
+- Previous log rotation only worked in interactive mode
+- Error logs had no rotation mechanism
+- Background/daemon mode had no log management
+
+## Solution
+
+Implemented comprehensive log rotation across all deployment modes:
+
+### Docker/Podman Containers
+- Added `docker/nginx.conf` with proper log management
+- Enhanced `entrypoint.sh` with `rotate_logs()` function
+- Rotation works in BOTH interactive and background modes
+- Handles both access and error logs
+- Keeps logs under 5000 lines, rotating to 1000 lines
+- Rotation check every 60 seconds
+
+### Proxmox LXC Deployments
+- Added logrotate configuration in `setup.sh`
+- Daily log rotation via system logrotate
+- Keeps 7 days of compressed logs
+- Automatically reloads nginx after rotation
+
+## Resolution
+
+- Logs are capped at ~5000 lines (~500KB typical size)
+- Automatic rotation prevents unbounded growth
+- Container storage remains stable over time
+- No manual intervention required
+
+For detailed information, see [STORAGE_OVERFLOW_FIX.md](STORAGE_OVERFLOW_FIX.md)
+
+## Impact
+
+**Before:** Logs could grow to GB sizes, filling host partition  
+**After:** Logs stay under 500KB, stable storage footprint

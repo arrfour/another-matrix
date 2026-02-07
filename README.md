@@ -90,6 +90,7 @@ cd deploy
 | **Project history** | Read `CHANGELOG.md` |
 | **Structure changes** | Read `docs/REORGANIZATION.md` |
 | **Bug tracking** | Check `docs/ISSUES.md` |
+| **Storage overflow fix** | See `docs/STORAGE_OVERFLOW_FIX.md` |
 
 ## Features Included
 
@@ -105,6 +106,7 @@ cd deploy
 ✅ Docker/Podman containerization  
 ✅ Interactive container terminal UI  
 ✅ Proxmox LXC automated deployment  
+✅ Automatic log rotation and storage management  
 
 ## File Dependencies
 
