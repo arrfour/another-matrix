@@ -30,7 +30,7 @@ A comprehensive log rotation strategy was implemented across all deployment mode
 - **New `rotate_logs()` function**: Handles both access and error logs
   - Keeps logs under 5000 lines
   - Rotates to last 1000 lines when threshold is exceeded
-  - Logs rotation events for troubleshooting
+  - No race conditions - rotation is atomic
   
 - **Background Mode Enhancement**: 
   - Previously just ran nginx with `exec`
