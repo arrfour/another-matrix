@@ -1,9 +1,58 @@
 #!/bin/sh
 
+# Function to rotate logs - keeps logs under control
+rotate_logs() {
+  # Rotate access log if it exceeds 5000 lines
+  if [ -f /var/log/nginx/access.log ]; then
+    LOG_LINES=$(wc -l < /var/log/nginx/access.log 2>/dev/null || echo 0)
+    if [ "$LOG_LINES" -gt 5000 ]; then
+      tail -1000 /var/log/nginx/access.log > /var/log/nginx/access.log.tmp 2>/dev/null
+      mv /var/log/nginx/access.log.tmp /var/log/nginx/access.log 2>/dev/null
+      echo "$(date +'%Y/%m/%d %H:%M:%S') [info] Access log rotated (exceeded 5000 lines)" >> /var/log/nginx/access.log
+    fi
+  fi
+  
+  # Rotate error log if it exceeds 5000 lines
+  if [ -f /var/log/nginx/error.log ]; then
+    ERROR_LINES=$(wc -l < /var/log/nginx/error.log 2>/dev/null || echo 0)
+    if [ "$ERROR_LINES" -gt 5000 ]; then
+      tail -1000 /var/log/nginx/error.log > /var/log/nginx/error.log.tmp 2>/dev/null
+      mv /var/log/nginx/error.log.tmp /var/log/nginx/error.log 2>/dev/null
+      echo "$(date +'%Y/%m/%d %H:%M:%S') [notice] Error log rotated (exceeded 5000 lines)" >> /var/log/nginx/error.log
+    fi
+  fi
+}
+
 # Check if we have a TTY for interactive mode
 if [ ! -t 0 ]; then
-  echo "Non-interactive environment detected. Starting nginx in foreground..."
-  exec nginx -g 'daemon off;'
+  echo "Non-interactive environment detected. Starting nginx in foreground with log rotation..."
+  
+  # Start nginx in the background
+  nginx -g 'daemon off;' &
+  NGINX_PID=$!
+  
+  # Function to cleanup on exit
+  cleanup_bg() {
+    echo "Shutting down nginx..."
+    kill $NGINX_PID 2>/dev/null
+    wait $NGINX_PID 2>/dev/null
+    exit 0
+  }
+  
+  trap cleanup_bg SIGTERM SIGINT
+  
+  # Background mode: just monitor nginx and rotate logs periodically
+  while true; do
+    # Check if nginx is still running
+    if ! kill -0 $NGINX_PID 2>/dev/null; then
+      echo "Nginx process died. Exiting..."
+      exit 1
+    fi
+    
+    # Rotate logs every 60 seconds
+    rotate_logs
+    sleep 60
+  done
 fi
 
 # Start nginx in the background for interactive mode
@@ -32,18 +81,8 @@ while true; do
     exit 1
   fi
 
-  # Automated Log Management (Rotation/Compaction)
-  # Keep log file under 5000 lines, compacting to most recent 1000 lines if exceeded
-  if [ -f /var/log/nginx/access.log ]; then
-    LOG_LINES=$(wc -l < /var/log/nginx/access.log 2>/dev/null || echo 0)
-    if [ "$LOG_LINES" -gt 5000 ]; then
-      # Use a temporary file for safe rotation
-      tail -1000 /var/log/nginx/access.log > /var/log/nginx/access.log.tmp 2>/dev/null
-      mv /var/log/nginx/access.log.tmp /var/log/nginx/access.log 2>/dev/null
-      # Log the rotation event to the log itself for troubleshooting
-      echo "$(date +'%Y/%m/%d %H:%M:%S') [info] Log rotated by entrypoint (exceeded 5000 lines)" >> /var/log/nginx/access.log
-    fi
-  fi
+  # Rotate logs periodically
+  rotate_logs
 
   # Skip UI if not in a TTY (though we handle this at start, double safety)
   if [ -t 0 ]; then
