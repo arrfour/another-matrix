@@ -8,7 +8,6 @@ rotate_logs() {
     if [ "$LOG_LINES" -gt 5000 ]; then
       tail -1000 /var/log/nginx/access.log > /var/log/nginx/access.log.tmp 2>/dev/null
       mv /var/log/nginx/access.log.tmp /var/log/nginx/access.log 2>/dev/null
-      echo "$(date +'%Y/%m/%d %H:%M:%S') [info] Access log rotated (exceeded 5000 lines)" >> /var/log/nginx/access.log
     fi
   fi
   
@@ -18,7 +17,6 @@ rotate_logs() {
     if [ "$ERROR_LINES" -gt 5000 ]; then
       tail -1000 /var/log/nginx/error.log > /var/log/nginx/error.log.tmp 2>/dev/null
       mv /var/log/nginx/error.log.tmp /var/log/nginx/error.log 2>/dev/null
-      echo "$(date +'%Y/%m/%d %H:%M:%S') [notice] Error log rotated (exceeded 5000 lines)" >> /var/log/nginx/error.log
     fi
   fi
 }
